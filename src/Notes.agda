@@ -1,56 +1,63 @@
 module Notes where
 
 open import Data.Nat
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary using (Rel)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Fin using (Fin; zero; suc)
 open import Agda.Primitive
 
-abstract
-  Pitch : Set
-  Pitch = ℕ
+Pitch : Set
+Pitch = ℕ
 
-  _+ᵖ_ : Pitch → ℕ → Pitch
-  _+ᵖ_ = _+_
+bottom : Pitch
+bottom = 0
 
-  record SamePitchClass (pitch₁ pitch₂ : Pitch) : Set where
-    field
-      octave₁ octave₂ : Pitch
-      same-class : octave₁ * 12 + pitch₁ ≡ octave₂ * 12 + pitch₂
+_+ᵖ_ : Pitch → ℕ → Pitch
+_+ᵖ_ = _+_
 
-  PitchClass : Set
-  PitchClass = Fin 12
+record SamePitchClass (pitch₁ pitch₂ : Pitch) : Set where
+  field
+    octave₁ octave₂ : Pitch
+    same-class : octave₁ * 12 + pitch₁ ≡ octave₂ * 12 + pitch₂
 
-  pattern s n = suc n
-  toPitchClass : Pitch → PitchClass
-  toPitchClass zero = zero
-  toPitchClass (s zero) = s zero
-  toPitchClass (s (s zero)) = s (s zero)
-  toPitchClass (s (s (s zero))) = s (s (s zero))
-  toPitchClass (s (s (s (s zero)))) = s (s (s (s zero)))
-  toPitchClass (s (s (s (s (s zero))))) = s (s (s (s (s zero))))
-  toPitchClass (s (s (s (s (s (s zero)))))) = s (s (s (s (s (s zero)))))
-  toPitchClass (s (s (s (s (s (s (s zero))))))) = s (s (s (s (s (s (s zero))))))
-  toPitchClass (s (s (s (s (s (s (s (s zero)))))))) = s (s (s (s (s (s (s (s zero)))))))
-  toPitchClass (s (s (s (s (s (s (s (s (s zero))))))))) = s (s (s (s (s (s (s (s (s zero))))))))
-  toPitchClass (s (s (s (s (s (s (s (s (s (s zero)))))))))) = s (s (s (s (s (s (s (s (s (s zero)))))))))
-  toPitchClass (s (s (s (s (s (s (s (s (s (s (s zero))))))))))) = s (s (s (s (s (s (s (s (s (s (s zero))))))))))
-  toPitchClass (s (s (s (s (s (s (s (s (s (s (s (s x)))))))))))) = toPitchClass x
+PitchClass : Set
+PitchClass = Fin 12
 
-  postulate
-    toPitchClass⊃SamePitchClass : (x y : Pitch) → toPitchClass x ≡ toPitchClass y → SamePitchClass x y
+pattern s n = suc n
+toPitchClass : Pitch → PitchClass
+toPitchClass zero = zero
+toPitchClass (s zero) = s zero
+toPitchClass (s (s zero)) = s (s zero)
+toPitchClass (s (s (s zero))) = s (s (s zero))
+toPitchClass (s (s (s (s zero)))) = s (s (s (s zero)))
+toPitchClass (s (s (s (s (s zero))))) = s (s (s (s (s zero))))
+toPitchClass (s (s (s (s (s (s zero)))))) = s (s (s (s (s (s zero)))))
+toPitchClass (s (s (s (s (s (s (s zero))))))) = s (s (s (s (s (s (s zero))))))
+toPitchClass (s (s (s (s (s (s (s (s zero)))))))) = s (s (s (s (s (s (s (s zero)))))))
+toPitchClass (s (s (s (s (s (s (s (s (s zero))))))))) = s (s (s (s (s (s (s (s (s zero))))))))
+toPitchClass (s (s (s (s (s (s (s (s (s (s zero)))))))))) = s (s (s (s (s (s (s (s (s (s zero)))))))))
+toPitchClass (s (s (s (s (s (s (s (s (s (s (s zero))))))))))) = s (s (s (s (s (s (s (s (s (s (s zero))))))))))
+toPitchClass (s (s (s (s (s (s (s (s (s (s (s (s x)))))))))))) = toPitchClass x
+
+postulate
+  toPitchClass⊃SamePitchClass : (x y : Pitch) → toPitchClass x ≡ toPitchClass y → SamePitchClass x y
 
 data DiatonicMember : Set where
   d1 d2 d3 d4 d5 d6 d7 : DiatonicMember
 
-abstract
-  Duration : Set
-  Duration = ℕ
+Duration : Set
+Duration = ℕ
 
-  _+ᵈ_ : Duration → Duration → Duration
-  _+ᵈ_ = _+_
+beat : Duration
+beat = 1
 
-  infixl 4 _+ᵈ_
+_+ᵈ_ : Duration → Duration → Duration
+_+ᵈ_ = _+_
+
+_*ᵈ_ : Duration → ℕ → Duration
+_*ᵈ_ = _*_
+
+infixl 4 _+ᵈ_
 
 private variable
   d d₁ d₂ d₃ : Duration
@@ -113,6 +120,30 @@ data Consonant : Rel Pitch lzero where
   consonant↑ : ∀ {i q n} → (int : IntervalDef i q n) → ConsonantInterval int → Consonant p (p +ᵖ n)
   consonant↓ : ∀ {i q n} → (int : IntervalDef i q n) → ConsonantInterval int → Consonant (p +ᵖ n) p
 
+data Line : Duration → Set where
+  note : Pitch → (d : Duration) → Line d
+  _▹_ : Line d₁ → Line d₂ → Line (d₁ +ᵈ d₂)
+infixl 4 _▹_
+
+private variable
+  l l₁ l₂ l₃ l₁′ l₂′ : Line d
+
+infix 2 _⇒_
+data _⇒_ : {d : Duration} → Rel (Line d) lzero where
+  rearticulate : (d₁ : Duration)
+               → note p (d₁    +ᵈ    d₂)
+               ⇒ note p  d₁ ▹ note p d₂
+  neighbor : (d₁ : Duration)
+           → (p₂ : Pitch)
+           → note p₁ (d₁    +ᵈ     d₂)▹ note p₁ d₃
+           ⇒ note p₁  d₁ ▹ note p₂ d₂ ▹ note p₁ d₃  -- FOR SOME ADJACENT p₂
+  -- unclear how to describe arpeggiation; since it's defined as an operator
+  -- over multiple lines
+  cong : l₁ ⇒ l₁′ → l₂  ⇒ l₂′
+       → l₁ ▹ l₂  ⇒ l₁′ ▹ l₂′
+  trans : l₁ ⇒ l₂ → l₂ ⇒ l₃ → l₁ ⇒ l₃
 
 
+test : note bottom (beat *ᵈ 4) ⇒ note 0 1 ▹ note 2 1 ▹ note 0 2
+test = trans (rearticulate 2) (neighbor 1 (bottom +ᵖ 2))
 
