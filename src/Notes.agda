@@ -1,10 +1,20 @@
+{-# OPTIONS --rewriting #-}
+
 module Notes where
 
+open import Agda.Builtin.Equality
+open import Agda.Builtin.Equality.Rewrite
+
+open import Data.Product
 open import Data.Nat
+open import Data.Nat.Properties
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Fin using (Fin; zero; suc)
 open import Agda.Primitive
+
+{-# REWRITE +-assoc #-}
+
 
 Pitch : Set
 Pitch = ℕ
@@ -124,7 +134,6 @@ data DiatonicMember : ∀ {i q} → Interval i q → Set where
   M7 : DiatonicMember M7
   p8 : DiatonicMember p8
 
-
 intervalSize : ∀ {i q} → Interval i q → ℕ
 intervalSize p1 = 0
 intervalSize m2 = 1
@@ -139,6 +148,23 @@ intervalSize m7 = 10
 intervalSize M7 = 11
 intervalSize p8 = 12
 
+
+record SameDiatonicCollection (p₁ p₂ : Pitch) : Set where
+  field
+    tonic : Pitch
+    sinterval₁ : ∃₂ Interval
+    sinterval₂ : ∃₂ Interval
+
+  interval₁ = proj₂ (proj₂ sinterval₁)
+  interval₂ = proj₂ (proj₂ sinterval₂)
+
+  field
+    member₁ : DiatonicMember interval₁
+    member₂ : DiatonicMember interval₂
+    p₁∈ : tonic +ᵖ intervalSize interval₁ ≡ p₁
+    p₂∈ : tonic +ᵖ intervalSize interval₂ ≡ p₂
+
+
 data ConsonantInterval : ∀ {i q} → Interval i q → Set where
   p1 : ConsonantInterval p1
   p8 : ConsonantInterval p8
@@ -151,10 +177,11 @@ data ConsonantInterval : ∀ {i q} → Interval i q → Set where
 
 
 data Consonant : Rel Pitch lzero where
-  consonant↑ : ∀ {i q} → (int : Interval i q) → ConsonantInterval int → Consonant p (p +ᵖ intervalSize int)
-  consonant↓ : ∀ {i q} → (int : Interval i q) → ConsonantInterval int → Consonant (p +ᵖ intervalSize int) p
+  consonant↑ : ∀ {i q} → {int : Interval i q} → ConsonantInterval int → Consonant p (p +ᵖ intervalSize int)
+  consonant↓ : ∀ {i q} → {int : Interval i q} → ConsonantInterval int → Consonant (p +ᵖ intervalSize int) p
 
 data Line : Duration → Set where
+  rest : (d : Duration) → Line d
   note : Pitch → (d : Duration) → Line d
   _▹_ : Line d₁ → Line d₂ → Line (d₁ +ᵈ d₂)
 infixl 4 _▹_
@@ -164,20 +191,47 @@ private variable
 
 infix 2 _⇒_
 data _⇒_ : {d : Duration} → Rel (Line d) lzero where
-  rearticulate : (d₁ : Duration)
-               → note p (d₁    +ᵈ    d₂)
-               ⇒ note p  d₁ ▹ note p d₂
-  neighbor : (d₁ : Duration)
-           → (p₂ : Pitch)
-           → note p₁ (d₁    +ᵈ     d₂)▹ note p₁ d₃
-           ⇒ note p₁  d₁ ▹ note p₂ d₂ ▹ note p₁ d₃  -- FOR SOME ADJACENT p₂
+  -- p35/1
+  rearticulate
+    : (d₁ : Duration)
+    → note p (d₁    +ᵈ    d₂)
+    ⇒ note p  d₁ ▹ note p d₂
+  -- p35/2
+  neighbor
+    : (d₁ : Duration)
+    → (p₂ : Pitch)
+    → note p₁ (d₁    +ᵈ     d₂)▹ note p₁ d₃
+    ⇒ note p₁  d₁ ▹ note p₂ d₂ ▹ note p₁ d₃  -- FOR SOME ADJACENT p₂
+
+  -- p36/1
   -- unclear how to describe arpeggiation; since it's defined as an operator
   -- over multiple lines
-  cong : l₁ ⇒ l₁′ → l₂  ⇒ l₂′
-       → l₁ ▹ l₂  ⇒ l₁′ ▹ l₂′
-  trans : l₁ ⇒ l₂ → l₂ ⇒ l₃ → l₁ ⇒ l₃
+
+  -- p36/2
+  step-motion
+    : Consonant p₁ p₂
+    → SameDiatonicCollection p₁ p₂
+    → note p₁ (d₁ +ᵈ d₂) ▹ note p₂ d₃
+    ⇒ note {! this half of the line is wrong !} (d₁ +ᵈ d₂) ▹ note p₂ d₃
 
 
-test : note bottom (beat *ᵈ 4) ⇒ note 0 1 ▹ note 2 1 ▹ note 0 2
-test = trans (rearticulate 2) (neighbor 1 (bottom +ᵖ 2))
+  -- p37/1
+  delay
+    : note p₁ d₁         ▹ note p₂ (d₂ +ᵈ d₃)
+    ⇒ note p₁ (d₁ +ᵈ d₂) ▹ note p₂        d₃
+  -- p37/1
+  delayR
+    : note p (d₁ +ᵈ d₂)
+    ⇒ rest d₁ ▹ note p d₂
+  cong
+    : l₁ ⇒ l₁′ → l₂  ⇒ l₂′
+    → l₁ ▹ l₂  ⇒ l₁′ ▹ l₂′
+  trans
+    : l₁ ⇒ l₂
+    → l₂ ⇒ l₃
+    → l₁ ⇒ l₃
+
+
+_ : note bottom (beat *ᵈ 4) ⇒ note 0 1 ▹ note 2 1 ▹ note 0 2
+_ = trans (rearticulate 2) (neighbor 1 (bottom +ᵖ 2))
 
