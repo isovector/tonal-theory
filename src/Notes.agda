@@ -42,9 +42,6 @@ toPitchClass (s (s (s (s (s (s (s (s (s (s (s (s x)))))))))))) = toPitchClass x
 postulate
   toPitchClass⊃SamePitchClass : (x y : Pitch) → toPitchClass x ≡ toPitchClass y → SamePitchClass x y
 
-data DiatonicMember : Set where
-  d1 d2 d3 d4 d5 d6 d7 : DiatonicMember
-
 Duration : Set
 Duration = ℕ
 
@@ -78,34 +75,71 @@ data IntervalCategoryProof : Pitch → Pitch → IntervalCategory → Set where
   skip↑      : IntervalCategoryProof p (p +ᵖ suc (suc (suc n))) skip
   skip↓      : IntervalCategoryProof (p +ᵖ suc (suc (suc n))) p skip
 
-data IntervalSize : Set where
-  unison  : IntervalSize
-  second  : IntervalSize
-  third   : IntervalSize
-  fourth  : IntervalSize
-  fifth   : IntervalSize
-  sixth   : IntervalSize
-  seventh : IntervalSize
-  octave  : IntervalSize
+data IntervalName : Set where
+  unison  : IntervalName
+  second  : IntervalName
+  third   : IntervalName
+  fourth  : IntervalName
+  fifth   : IntervalName
+  sixth   : IntervalName
+  seventh : IntervalName
+  octave  : IntervalName
+
+data Adjacency : Rel IntervalName lzero where
+  sym  : ∀ {i j} → Adjacency i j → Adjacency j i
+  adj₁ : Adjacency unison second
+  adj₂ : Adjacency second third
+  adj₃ : Adjacency third fourth
+  adj₄ : Adjacency fourth fifth
+  adj₅ : Adjacency fifth sixth
+  adj₆ : Adjacency sixth seventh
+  adj₇ : Adjacency seventh octave
+
+
 
 data Quality : Set where
   minor major perfect : Quality
 
-data IntervalDef : IntervalSize → Quality → ℕ → Set where
-  p1 : IntervalDef unison  perfect 0
-  m2 : IntervalDef second  minor   1
-  M2 : IntervalDef second  major   2
-  m3 : IntervalDef third   minor   3
-  M3 : IntervalDef third   major   4
-  p4 : IntervalDef fourth  perfect 5
-  p5 : IntervalDef fifth   perfect 7
-  m6 : IntervalDef sixth   minor   8
-  M6 : IntervalDef sixth   major   9
-  m7 : IntervalDef seventh minor   10
-  M7 : IntervalDef seventh major   11
-  p8 : IntervalDef octave  perfect 12
+data Interval : IntervalName → Quality → Set where
+  p1 : Interval unison  perfect
+  m2 : Interval second  minor
+  M2 : Interval second  major
+  m3 : Interval third   minor
+  M3 : Interval third   major
+  p4 : Interval fourth  perfect
+  p5 : Interval fifth   perfect
+  m6 : Interval sixth   minor
+  M6 : Interval sixth   major
+  m7 : Interval seventh minor
+  M7 : Interval seventh major
+  p8 : Interval octave  perfect
 
-data ConsonantInterval : ∀ {i q n} → IntervalDef i q n → Set where
+data DiatonicMember : ∀ {i q} → Interval i q → Set where
+  p1 : DiatonicMember p1
+  M2 : DiatonicMember M2
+  M3 : DiatonicMember M3
+  p4 : DiatonicMember p4
+  p5 : DiatonicMember p5
+  M6 : DiatonicMember M6
+  M7 : DiatonicMember M7
+  p8 : DiatonicMember p8
+
+
+intervalSize : ∀ {i q} → Interval i q → ℕ
+intervalSize p1 = 0
+intervalSize m2 = 1
+intervalSize M2 = 2
+intervalSize m3 = 3
+intervalSize M3 = 4
+intervalSize p4 = 5
+intervalSize p5 = 7
+intervalSize m6 = 8
+intervalSize M6 = 9
+intervalSize m7 = 10
+intervalSize M7 = 11
+intervalSize p8 = 12
+
+data ConsonantInterval : ∀ {i q} → Interval i q → Set where
   p1 : ConsonantInterval p1
   p8 : ConsonantInterval p8
   p4 : ConsonantInterval p4  -- only when it's not the lowest note
@@ -117,8 +151,8 @@ data ConsonantInterval : ∀ {i q n} → IntervalDef i q n → Set where
 
 
 data Consonant : Rel Pitch lzero where
-  consonant↑ : ∀ {i q n} → (int : IntervalDef i q n) → ConsonantInterval int → Consonant p (p +ᵖ n)
-  consonant↓ : ∀ {i q n} → (int : IntervalDef i q n) → ConsonantInterval int → Consonant (p +ᵖ n) p
+  consonant↑ : ∀ {i q} → (int : Interval i q) → ConsonantInterval int → Consonant p (p +ᵖ intervalSize int)
+  consonant↓ : ∀ {i q} → (int : Interval i q) → ConsonantInterval int → Consonant (p +ᵖ intervalSize int) p
 
 data Line : Duration → Set where
   note : Pitch → (d : Duration) → Line d
