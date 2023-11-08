@@ -3,7 +3,7 @@ module Pitch where
 open import Data.Nat
 open import Data.Nat.DivMod
 open import Data.Nat.Properties
-open import Relation.Binary using (Rel)
+open import Relation.Binary using (Rel; Decidable)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Fin as Fin using (Fin; toℕ; remQuot; inject≤; zero; suc; fromℕ<)
 open import Agda.Primitive
@@ -92,6 +92,10 @@ semitones x +ᵖ y = semitones (x + y)
 _aboveᵖ_ : Interval → Pitch → Pitch
 i aboveᵖ p = p +ᵖ toℕ (intervalSemitones i)
 
+_aboveˣᵖ_ : ExtendedInterval → Pitch → Pitch
+↪ i x aboveˣᵖ p = i aboveᵖ p
+8va+ i aboveˣᵖ p = p8 aboveᵖ (i aboveˣᵖ p)
+
 infixl 5 _+ᵖ_
 
 open import Function using (_∘_)
@@ -110,14 +114,22 @@ pitchClass (semitones n) = toPitchClass (fromℕ< (m%n<n n _))
 SamePitchClass : Rel Pitch lzero
 SamePitchClass p₁ p₂ = pitchClass p₁ ≡ pitchClass p₂
 
+_≤ᵖ_ : Rel Pitch lzero
+semitones x ≤ᵖ semitones y = x ≤ y
+
+_≤ᵖ?_ : Decidable _≤ᵖ_
+semitones x ≤ᵖ? semitones y = x ≤? y
+
 record InDiatonicCollection (pc tonic : PitchClass) : Set where
+  constructor ∈-diatonic
   field
-    interval : Interval
+    {interval} : Interval
     is-diatonic : DiatonicInterval interval
     in-collection : interval aboveᶜ tonic ≡ pc
 
+
 SameDiatonicCollection : Rel Pitch lzero
 SameDiatonicCollection p₁ p₂ =
-  ∃[ c ] InDiatonicCollection (pitchClass p₁) c
-       × InDiatonicCollection (pitchClass p₂) c
+  ∃[ t ] InDiatonicCollection (pitchClass p₁) (pitchClass t)
+       × InDiatonicCollection (pitchClass p₂) (pitchClass t)
 
