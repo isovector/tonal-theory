@@ -1,10 +1,11 @@
 module Pitch where
 
 open import Data.Nat
+open import Data.Nat.DivMod
 open import Data.Nat.Properties
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
-open import Data.Fin as Fin using (Fin; toℕ; remQuot; inject≤; zero; suc)
+open import Data.Fin as Fin using (Fin; toℕ; remQuot; inject≤; zero; suc; fromℕ<)
 open import Agda.Primitive
 open import Data.Product
 open import Interval
@@ -69,10 +70,14 @@ record Pitch : Set where
   field
     getSemitones : ℕ
 
+note : PitchClass → ℕ → Pitch
+note c o = semitones (o * 12 + toℕ (toFin12 c))
 
 
-A0 : Pitch
-A0 = semitones 0
+A0 C4 : Pitch
+A0 = note A 0
+C4 = note C 4
+
 
 _+ᵖ_ : Pitch → ℕ → Pitch
 semitones x +ᵖ y = semitones (x + y)
@@ -87,8 +92,7 @@ i aboveᶜ pc with remQuot {2} 12 (intervalSemitones i +ᶠ toFin12 pc)
 ... | _ , snd = fromFin12 snd
 
 pitchClass : Pitch → PitchClass
-pitchClass (semitones zero)    = A
-pitchClass (semitones (suc p)) = m2 aboveᶜ pitchClass (semitones p)
+pitchClass (semitones n) = fromFin12 (fromℕ< (m%n<n n _))
 
 SamePitchClass : Rel Pitch lzero
 SamePitchClass p₁ p₂ = pitchClass p₁ ≡ pitchClass p₂
