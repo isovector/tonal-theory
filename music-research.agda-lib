@@ -1,0 +1,6 @@
+name: music-research
+depend: standard-library
+include: src
+flags:
+  --warning=noUnsupportedIndexedMatch
+
