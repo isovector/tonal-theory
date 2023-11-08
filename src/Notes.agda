@@ -2,9 +2,6 @@
 
 module Notes where
 
-open import Agda.Builtin.Equality
-open import Agda.Builtin.Equality.Rewrite
-
 open import Pitch
 open import Duration
 open import Interval
@@ -16,8 +13,6 @@ open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Fin using (Fin; zero; suc; toℕ)
 open import Agda.Primitive
-
-{-# REWRITE +ᵈ-assoc #-}
 
 private variable
   d d₁ d₂ d₃ : Duration
@@ -82,7 +77,7 @@ data _⇒_ : {d : Duration} → Rel (Line d) lzero where
     → l₁ ⇒ l₃
 
 
-_ : note A0 𝅝
-  ⇒ note A0 𝅘𝅥 ▹ note (A0 ♯) 𝅘𝅥 ▹ note A0 𝅗𝅥
-_ = trans (rearticulate 𝅗𝅥) (neighbor 𝅘𝅥 (A0 ♯))
+_ : note A0 (2 measures)
+  ⇒ note A0 𝅗𝅥 ▹ note (A0 ♯) 𝅗𝅥 ▹ note A0 𝅝
+_ = trans (rearticulate 𝅝) (neighbor 𝅗𝅥 (A0 ♯))
 
