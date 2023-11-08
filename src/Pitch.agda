@@ -9,6 +9,50 @@ open import Agda.Primitive
 open import Data.Product
 open import Interval
 
+data PitchClass : Set where
+  A A♯ B C C♯ D D♯ E F F♯ G G♯ : PitchClass
+
+A♭ = G♯
+B♭ = A♯
+B♯ = C
+C♭ = B
+D♭ = C♯
+E♭ = D♯
+E♯ = F
+F♭ = E
+G♭ = F♯
+
+private
+  toFin12 : PitchClass → Fin 12
+  toFin12 A  = zero
+  toFin12 A♯ = suc zero
+  toFin12 B  = suc (suc zero)
+  toFin12 C  = suc (suc (suc zero))
+  toFin12 C♯ = suc (suc (suc (suc zero)))
+  toFin12 D  = suc (suc (suc (suc (suc zero))))
+  toFin12 D♯ = suc (suc (suc (suc (suc (suc zero)))))
+  toFin12 E  = suc (suc (suc (suc (suc (suc (suc zero))))))
+  toFin12 F  = suc (suc (suc (suc (suc (suc (suc (suc zero)))))))
+  toFin12 F♯ = suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))
+  toFin12 G  = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))
+  toFin12 G♯ = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))
+
+  fromFin12 : Fin 12 → PitchClass
+  fromFin12 zero = A
+  fromFin12 (suc zero) = A♯
+  fromFin12 (suc (suc zero)) = B
+  fromFin12 (suc (suc (suc zero))) = C
+  fromFin12 (suc (suc (suc (suc zero)))) = C♯
+  fromFin12 (suc (suc (suc (suc (suc zero))))) = D
+  fromFin12 (suc (suc (suc (suc (suc (suc zero)))))) = D♯
+  fromFin12 (suc (suc (suc (suc (suc (suc (suc zero))))))) = E
+  fromFin12 (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = F
+  fromFin12 (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = F♯
+  fromFin12 (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = G
+  fromFin12 (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = G♯
+
+
+
 private
   _+ᶠ_ : ∀ {m n} → Fin (suc m) → Fin n → Fin (m + n)
   _+ᶠ_ {m} {n} zero y = inject≤ y (begin
@@ -19,41 +63,37 @@ private
     where open ≤-Reasoning
   _+ᶠ_ {suc m} {n} (suc x) y = suc (x +ᶠ y)
 
-abstract
-  Pitch : Set
-  Pitch = ℕ
 
-  bottom : Pitch
-  bottom = 0
+record Pitch : Set where
+  constructor semitones
+  field
+    getSemitones : ℕ
 
-  _+ᵖ_ : Pitch → ℕ → Pitch
-  _+ᵖ_ = _+_
 
-  _aboveᵖ_ : Interval → Pitch → Pitch
-  i aboveᵖ p = p + toℕ (intervalSemitones i)
 
-  infixl 5 _+ᵖ_
+A0 : Pitch
+A0 = semitones 0
 
-  PitchClass : Set
-  PitchClass = Fin 12
+_+ᵖ_ : Pitch → ℕ → Pitch
+semitones x +ᵖ y = semitones (x + y)
 
-  _aboveᶜ_ : Interval → PitchClass → PitchClass
-  i aboveᶜ pc with remQuot 2 (intervalSemitones i +ᶠ pc)
-  ... | fst , _ = fst
+_aboveᵖ_ : Interval → Pitch → Pitch
+i aboveᵖ p = p +ᵖ toℕ (intervalSemitones i)
 
-  pitchClass : Pitch → PitchClass
-  pitchClass zero    = zero
-  pitchClass (suc p) = m2 aboveᶜ pitchClass p
+infixl 5 _+ᵖ_
 
-  record HasPitchClass (p : Pitch) (c : PitchClass) : Set where
-    field
-      which-octave : ℕ
-      equals : which-octave * 12 + toℕ c ≡ p
+_aboveᶜ_ : Interval → PitchClass → PitchClass
+i aboveᶜ pc with remQuot {2} 12 (intervalSemitones i +ᶠ toFin12 pc)
+... | _ , snd = fromFin12 snd
+
+pitchClass : Pitch → PitchClass
+pitchClass (semitones zero)    = A
+pitchClass (semitones (suc p)) = m2 aboveᶜ pitchClass (semitones p)
 
 SamePitchClass : Rel Pitch lzero
-SamePitchClass p₁ p₂ = ∃[ c ] HasPitchClass p₁ c × HasPitchClass p₂ c
+SamePitchClass p₁ p₂ = pitchClass p₁ ≡ pitchClass p₂
 
-record InDiatonicCollection (tonic pc : PitchClass) : Set where
+record InDiatonicCollection (pc tonic : PitchClass) : Set where
   field
     interval : Interval
     is-diatonic : DiatonicInterval interval
@@ -61,7 +101,6 @@ record InDiatonicCollection (tonic pc : PitchClass) : Set where
 
 SameDiatonicCollection : Rel Pitch lzero
 SameDiatonicCollection p₁ p₂ =
-  ∃[ c ] InDiatonicCollection c (pitchClass p₁)
-       × InDiatonicCollection c (pitchClass p₂)
-
+  ∃[ c ] InDiatonicCollection (pitchClass p₁) c
+       × InDiatonicCollection (pitchClass p₂) c
 
