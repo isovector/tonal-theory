@@ -82,6 +82,7 @@ data _⇒_ : {d : Duration} → Rel (Line d) lzero where
     → l₁ ⇒ l₃
 
 
--- _ : note bottom (beat *ᵈ 4) ⇒ note bottom beat ▹ note 2 beat ▹ note 0 (beat *ᵈ 2)
--- _ = trans (rearticulate 2) (neighbor 1 (bottom +ᵖ 2))
+_ : note A0 𝅝
+  ⇒ note A0 𝅘𝅥 ▹ note (A0 ♯) 𝅘𝅥 ▹ note A0 𝅗𝅥
+_ = trans (rearticulate 𝅗𝅥) (neighbor 𝅘𝅥 (A0 ♯))
 

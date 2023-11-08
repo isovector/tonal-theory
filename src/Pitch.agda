@@ -70,13 +70,20 @@ record Pitch : Set where
   field
     getSemitones : ℕ
 
-note : PitchClass → ℕ → Pitch
-note c o = semitones (o * 12 + toℕ (fromPitchClass c))
+toNote : PitchClass → ℕ → Pitch
+toNote c o = semitones (o * 12 + toℕ (fromPitchClass c))
+
+_♯ : Pitch → Pitch
+semitones st ♯ = semitones (suc st)
+
+_♭ : Pitch → Pitch
+semitones zero ♭ = semitones zero
+semitones (suc st) ♭ = semitones st
 
 
 A0 C4 : Pitch
-A0 = note A 0
-C4 = note C 4
+A0 = toNote A 0
+C4 = toNote C 4
 
 
 _+ᵖ_ : Pitch → ℕ → Pitch
