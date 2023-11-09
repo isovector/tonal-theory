@@ -1,8 +1,4 @@
-{-# OPTIONS --rewriting --local-confluence-check #-}
-
 module Line where
-
-open import Agda.Builtin.Equality.Rewrite
 
 open import Data.Product using (_,_)
 open import Data.Nat
@@ -68,13 +64,9 @@ duration (x ▹ x₁) = duration x +ᵈ duration x₁
 postulate
   ▹-assoc : ∀ l₁ l₂ l₃ → (l₁ ▹ l₂) ▹ l₃ ≡ l₁ ▹ (l₂ ▹ l₃)
 
--- {-# REWRITE ▹-assoc #-}
-
 joinLine : (l : List Line) → Line → Line
 joinLine [] end = end
 joinLine (x ∷ l) end = x ▹ joinLine l end
-
-
 
 
 private variable
@@ -85,26 +77,30 @@ data _⇒_ : Rel Line lzero where
   -- p35/1
   rearticulate
     : (d₁ : Duration)
-    → note p (d₁    +ᵈ    d₂)
+    → d₁ +ᵈ d₂ ≈ᵈ d
+    → note p d
     ⇒ note p  d₁ ▹ note p d₂
 
   -- p35/2
   neighbor
     : (d₁ : Duration)
     → (p₂ : Pitch)
-    → note p₁ (d₁    +ᵈ     d₂)▹ note p₁ d₃
+    → d₁ +ᵈ d₂ ≈ᵈ d
+    → note p₁  d               ▹ note p₁ d₃
     ⇒ note p₁  d₁ ▹ note p₂ d₂ ▹ note p₁ d₃  -- FOR SOME ADJACENT p₂
 
   -- p36/1
   arpeggiate↑
     : (d₁ : Duration)
     → (ci : ConsonantInterval i)
-    → stack (d₁ +ᵈ d₂) p ci
+    → d₁ +ᵈ d₂ ≈ᵈ d
+    → stack d p ci
     ⇒ note p d₁ ▹ note (i aboveᵖ p) d₂
   arpeggiate↓
     : (d₁ : Duration)
     → (ci : ConsonantInterval i)
-    → stack (d₁ +ᵈ d₂) p ci
+    → d₁ +ᵈ d₂ ≈ᵈ d
+    → stack d p ci
     ⇒ note (i aboveᵖ p) d₁ ▹ note p d₂
 
   -- p36/2
@@ -115,7 +111,8 @@ data _⇒_ : Rel Line lzero where
     → ConsonantInterval i
     → (col : SameDiatonicCollection p (i aboveᵖ p))
     → let pitches = map (λ p → note p d₂) (interveningPitches p (i aboveᵖ p) col) in
-      note p (d₁ +ᵈ (d₂ *ᵈ length pitches)) ▹ note (i aboveᵖ p) d₃
+      d ≈ᵈ (d₁ +ᵈ (d₂ *ᵈ length pitches))
+    → note p d ▹ note (i aboveᵖ p) d₃
     ⇒ note p d₁ ▹ joinLine pitches (note (i aboveᵖ p) d₃)
   step-motion↓
     : (d₁ : Duration)
@@ -124,7 +121,8 @@ data _⇒_ : Rel Line lzero where
     → ConsonantInterval i
     → (col : SameDiatonicCollection p (i aboveᵖ p))
     → let pitches = reverse (map (λ p → note p d₂) (interveningPitches p (i aboveᵖ p) col)) in
-      note (i aboveᵖ p) (d₁ +ᵈ (d₂ *ᵈ length pitches)) ▹ note p d₃
+      d ≈ᵈ (d₁ +ᵈ (d₂ *ᵈ length pitches))
+    → note (i aboveᵖ p) d ▹ note p d₃
     ⇒ note (i aboveᵖ p) d₁ ▹ joinLine pitches (note p d₃)
 
   -- p37/1
@@ -157,28 +155,6 @@ data _⇒_ : Rel Line lzero where
     : l₁ ⇒ l₂
     → l₂ ⇒ l₃
     → l₁ ⇒ l₃
-
--- same-duration : l₁ ⇒ l₂ → duration l₁ ≡ duration l₂
--- same-duration (rearticulate d₁) = refl
--- same-duration (neighbor d₁ p₂) = ?
--- same-duration (arpeggiate↑ d₁ ci) = refl
--- same-duration (arpeggiate↓ d₁ ci) = refl
--- same-duration (step-motion↑ d₁ d₂ x col) = {! !}
--- same-duration (step-motion↓ d₁ d₂ x col) = {! !}
--- same-duration delay-note = ?
--- same-duration delay-stack = ?
--- same-duration delay-rest = refl
--- same-duration refl = {! !}
--- same-duration assocʳ = {! !}
--- same-duration (assocˡ {l₁} {l₂} {l₃}) = sym (+ᵈ-assoc (duration l₁) (duration l₂) (duration l₃))
--- same-duration (cong x x₁)
---   rewrite same-duration x
---   rewrite same-duration x₁
---     = refl
--- same-duration (trans x x₁)
---   rewrite same-duration x
---   rewrite same-duration x₁
---     = refl
 
 
 congʳ : l₂ ⇒ l₂′
