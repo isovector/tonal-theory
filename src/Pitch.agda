@@ -73,6 +73,11 @@ record Pitch : Set where
 toNote : PitchClass → ℕ → Pitch
 toNote c o = semitones (o * 12 + toℕ (fromPitchClass c))
 
+
+fromNote : Pitch → PitchClass × ℕ
+fromNote (semitones n) with n divMod 12
+... | result octs remainder _ = toPitchClass remainder , octs
+
 _♯ : Pitch → Pitch
 semitones st ♯ = semitones (suc st)
 

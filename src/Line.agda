@@ -179,13 +179,6 @@ reassoced (note x d)    = note x d
 reassoced (stack d p x) = stack d p x
 reassoced (x ▹ y)       = reassoced x ▹▹ reassoced y
 
-postulate
-  reassoc : {l : Line} → l ⇒ reassoced l
-  -- reassoc {rest d} = refl
-  -- reassoc {note x d} = refl
-  -- reassoc {stack d p x} = refl
-  -- reassoc {l₁ ▹ l₂} = ?
-
 module ⇒-Reasoning where
   open import Relation.Binary.PropositionalEquality using (_≡_; refl; setoid)
   open import Relation.Binary using (Preorder; IsPreorder; Setoid)
@@ -203,4 +196,20 @@ module ⇒-Reasoning where
 
   open import Relation.Binary.Reasoning.Preorder ⇒-preorder public
     hiding (step-≈)
+
+▹⇒▹▹ : l₁ ▹ l₂ ⇒ l₁ ▹▹ l₂
+▹⇒▹▹ {rest d}      = refl
+▹⇒▹▹ {note x d}    = refl
+▹⇒▹▹ {stack d p x} = refl
+▹⇒▹▹ {l₁ ▹ l₂}     = trans assocʳ (congʳ ▹⇒▹▹)
+
+reassoc : {l : Line} → l ⇒ reassoced l
+reassoc {rest d} = refl
+reassoc {note x d} = refl
+reassoc {stack d p x} = refl
+reassoc {x ▹ y} = begin
+  x ▹ y                       ∼⟨ cong reassoc reassoc ⟩
+  reassoced x ▹ reassoced y   ∼⟨ ▹⇒▹▹ ⟩
+  reassoced x ▹▹ reassoced y  ∎
+  where open ⇒-Reasoning
 

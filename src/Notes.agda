@@ -2,6 +2,7 @@
 
 module Notes where
 
+open import Data.String
 open import Pitch
 open import Duration
 open import Interval
@@ -10,6 +11,7 @@ open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (toℕ)
+open import Engraving
 
 
 
@@ -29,6 +31,7 @@ ode-chords
   = stack (2 measures) (toNote E 4) m3
   ▹ stack (2 measures) (toNote C 4) M3
   ▹ note E4 𝅘𝅥
+
   -- ▹ stack (2 measures) (toNote E 4) m3
   -- ▹ stack (1 measures) (toNote C 4) M3
   -- ▹ note C4 (1 measures)
