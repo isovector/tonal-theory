@@ -17,11 +17,18 @@ open import Data.Fin using (toℕ)
 --   consonant↑ : {int : Interval} → ConsonantInterval int → Consonant p (int aboveᵖ p)
 --   consonant↓ : {int : Interval} → ConsonantInterval int → Consonant (int aboveᵖ p) p
 
+D4 = toNote D 4
+E4 = toNote E 4
+F4 = toNote F 4
+G4 = toNote G 4
+A4 = toNote A 4
+A5 = toNote A 5
+
 ode-chords : Line
 ode-chords
   = stack (2 measures) (toNote E 4) m3
-  ▹ stack (2 measures) (toNote C 4) p5
-  ▹ note C4 𝅘𝅥
+  ▹ stack (2 measures) (toNote C 4) M3
+  ▹ note E4 𝅘𝅥
   -- ▹ stack (2 measures) (toNote E 4) m3
   -- ▹ stack (1 measures) (toNote C 4) M3
   -- ▹ note C4 (1 measures)
@@ -37,46 +44,60 @@ _>_ : PitchClass → Line → Line
 c > l = q c ▹ l
 infixr 5 _>_
 
-D4 = toNote D 4
-E4 = toNote E 4
-F4 = toNote F 4
-G4 = toNote G 4
-A4 = toNote A 4
-A5 = toNote A 5
+ode-b1 : Line
+ode-b1 = E > E > F > q G
+
+ode-b2 : Line
+ode-b2 = G > F > E > q D ▹ q C
+
+ode-b3 : Line
+ode-b3 = C > D > q E
+
+ode-b4+ : Line
+ode-b4+ = note E4 𝅘𝅥． ▹ note D4 𝅘𝅥𝅮 ▹ h D ▹ q E
 
 ode : Line
-ode = E > E > F > G > G > F > E > D > C > C > D > E > E > D > h D ▹ q E
-    -- > E > F > G > G > F > E > D > C > C > D > E > D > C > h C
+ode = ode-b1 ▹▹ ode-b2 ▹▹ ode-b3 ▹▹ ode-b4+
 
+ode-b4-ok : note E4 𝅝 ▹ note E4 𝅘𝅥 ⇒  ode-b4+
+ode-b4-ok = begin
+    note E4 𝅝 ▹ note E4 𝅘𝅥                              ∼⟨ neighbor 𝅘𝅥． D4 ⟩
+    note E4 𝅘𝅥． ▹ note D4 (𝅘𝅥𝅮 ⁀         𝅗𝅥) ▹ note E4 𝅘𝅥          ∼⟨ congʳ (congˡ (rearticulate 𝅘𝅥𝅮)) ⟩
+    note E4 𝅘𝅥． ▹ (note D4 𝅘𝅥𝅮 ▹ note D4 𝅗𝅥) ▹ note E4 𝅘𝅥  ∼⟨ reassoc ⟩
+    note E4 𝅘𝅥． ▹  note D4 𝅘𝅥𝅮 ▹ note D4 𝅗𝅥  ▹ note E4 𝅘𝅥    ∎
+  where open ⇒-Reasoning
+
+ode-b12-ok : stack (2 measures) E4 m3 ▹ note C4 𝅘𝅥 ⇒ ode-b1 ▹▹ ode-b2
+ode-b12-ok = begin
+  stack (𝅝 ⁀                                                        𝅝) E4 m3 ▹ note C4 𝅘𝅥   ∼⟨ congˡ (arpeggiate↑ 𝅗𝅥． m3) ⟩
+  (note E4 𝅗𝅥．                            ▹  note G4 (𝅘𝅥 ⁀           𝅝))      ▹ note C4 𝅘𝅥   ∼⟨ congˡ (step-motion↑ 𝅗𝅥 𝅘𝅥 m3 (C4 , ∈-diatonic M3 refl , ∈-diatonic p5 refl)) ⟩
+  (note E4 𝅗𝅥                 ▹ note F4 𝅘𝅥  ▹  note G4 (𝅘𝅥 ⁀           𝅝))      ▹ note C4 𝅘𝅥   ∼⟨ congˡ (congˡ (rearticulate 𝅘𝅥)) ⟩
+  ((  note E4 𝅘𝅥 ▹ note E4 𝅘𝅥) ▹ note F4 𝅘𝅥  ▹  note G4 (𝅘𝅥 ⁀           𝅝))      ▹ note C4 𝅘𝅥   ∼⟨ congˡ assocˡ ⟩
+  ((( note E4 𝅘𝅥 ▹ note E4 𝅘𝅥) ▹ note F4 𝅘𝅥) ▹  note G4 (𝅘𝅥 ⁀           𝅝))      ▹ note C4 𝅘𝅥   ∼⟨ congˡ (congʳ (rearticulate 𝅘𝅥)) ⟩
+  ((( note E4 𝅘𝅥 ▹ note E4 𝅘𝅥) ▹ note F4 𝅘𝅥) ▹ (note G4  𝅘𝅥  ▹  note G4 𝅝))      ▹ note C4 𝅘𝅥   ∼⟨ congˡ assocˡ ⟩
+  ((((note E4 𝅘𝅥 ▹ note E4 𝅘𝅥) ▹ note F4 𝅘𝅥) ▹  note G4  𝅘𝅥) ▹  note G4 𝅝)       ▹ note C4 𝅘𝅥   ∼⟨ assocʳ ⟩
+  ((( note E4 𝅘𝅥 ▹ note E4 𝅘𝅥) ▹ note F4 𝅘𝅥) ▹  note G4  𝅘𝅥) ▹ (note G4 𝅝        ▹ note C4 𝅘𝅥)  ∼⟨ congˡ reassoc ⟩
+  ode-b1                                                 ▹ (note G4 𝅝        ▹ note C4 𝅘𝅥)  ∼⟨ congʳ (step-motion↓ 𝅘𝅥 𝅘𝅥 p5 (C4 , ∈-diatonic p1 refl , ∈-diatonic p5 refl)) ⟩
+  ode-b1 ▹ (note G4 𝅘𝅥 ▹ note F4 𝅘𝅥 ▹ note E4 𝅘𝅥 ▹ note D4 𝅘𝅥 ▹ note C4 𝅘𝅥)                     ∼⟨ reassoc ⟩
+  ode-b1 ▹▹ ode-b2                                                                         ∎
+  where open ⇒-Reasoning
 
 ode-ok : ode-chords ⇒ ode
 ode-ok = begin
-    stack (2 measures) E4 m3 ▹ stack (2 measures) C4 p5 ▹ note C4 𝅘𝅥
-  ∼⟨ congˡ (arpeggiate₁ 𝅗𝅥． m3) ⟩
-    (note E4 𝅗𝅥． ▹ note G4 (𝅘𝅥 ⁀ 𝅝)) ▹ stack (2 measures) C4 p5 ▹ note C4 𝅘𝅥
-  ∼⟨ congˡ (congˡ (rearticulate 𝅘𝅥)) ⟩
-    ((note E4 𝅘𝅥 ▹ note E4 𝅗𝅥) ▹ note G4 (𝅘𝅥 ⁀ 𝅝)) ▹ stack (2 measures) C4 p5 ▹ note C4 𝅘𝅥
-  ∼⟨ congˡ assocʳ ⟩
-    (note E4 𝅘𝅥 ▹ (note E4 𝅗𝅥 ▹ note G4 (𝅘𝅥 ⁀ 𝅝))) ▹ stack (2 measures) C4 p5 ▹ note C4 𝅘𝅥
-  ∼⟨ congˡ (congʳ (step-motion↑ 𝅘𝅥 𝅘𝅥 m3 (C4 , ∈-diatonic M3 refl , ∈-diatonic p5 refl))) ⟩
-                              -- WTF???
-    (note E4 𝅘𝅥 ▹ (note E4 𝅘𝅥 ▹ note A5 𝅘𝅥 ▹ note G4 (𝅘𝅥 ⁀ 𝅝))) ▹ stack (2 measures) C4 p5 ▹ note C4 𝅘𝅥
-  ∼⟨ ? ⟩
-    E > E > F > G > G > F > E > D > C > C > D > E > E > D > h D ▹ q E
-  ∎
+  let h = stack (2 measures) E4 m3 in
+  h   ▹ stack (2 measures) C4 M3                                              ▹ note E4 𝅘𝅥   ∼⟨ congʳ (congˡ (arpeggiate↑ 𝅗𝅥． M3)) ⟩
+  h   ▹ ( note C4 𝅗𝅥．                           ▹  note E4 (𝅘𝅥  ⁀          𝅝)) ▹ note E4 𝅘𝅥   ∼⟨ congʳ (congˡ (congʳ (rearticulate 𝅘𝅥))) ⟩
+  h   ▹ ( note C4 𝅗𝅥．                           ▹ (note E4 𝅘𝅥   ▹  note E4 𝅝)) ▹ note E4 𝅘𝅥   ∼⟨ congʳ (congˡ assocˡ) ⟩
+  h   ▹ ((note C4 𝅗𝅥．                           ▹  note E4 𝅘𝅥)  ▹  note E4 𝅝)  ▹ note E4 𝅘𝅥   ∼⟨ congʳ assocʳ ⟩
+  h   ▹ ( note C4 𝅗𝅥．                           ▹  note E4 𝅘𝅥)  ▹ (note E4 𝅝   ▹ note E4 𝅘𝅥)  ∼⟨ congʳ (congʳ ode-b4-ok) ⟩
+  h   ▹ ( note C4 𝅗𝅥．                           ▹  note E4 𝅘𝅥)  ▹ ode-b4+                    ∼⟨ congʳ (congˡ (step-motion↑ 𝅗𝅥 𝅘𝅥 M3 (C4 , ∈-diatonic p1 refl , ∈-diatonic M3 refl))) ⟩
+  h   ▹ ( note C4 𝅗𝅥                 ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+                    ∼⟨ congʳ (congˡ (congˡ (rearticulate 𝅘𝅥))) ⟩
+  h   ▹ ((note C4 𝅘𝅥  ▹   note C4 𝅘𝅥) ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+                    ∼⟨ assocˡ ⟩
+  (h  ▹ ((note C4 𝅘𝅥  ▹   note C4 𝅘𝅥) ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)) ▹ ode-b4+                    ∼⟨ congˡ reassoc ⟩
+  (h  ▹   note C4 𝅘𝅥  ▹   note C4 𝅘𝅥  ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+                    ∼⟨ congˡ assocˡ ⟩
+  ((h ▹   note C4 𝅘𝅥) ▹   note C4 𝅘𝅥  ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+                    ∼⟨ assocʳ ⟩
+  (h  ▹   note C4 𝅘𝅥) ▹ ((note C4 𝅘𝅥  ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+)                   ∼⟨ congˡ ode-b12-ok ⟩
+  (ode-b1 ▹▹ ode-b2) ▹ ((note C4 𝅘𝅥  ▹ note D4 𝅘𝅥 ▹  note E4 𝅘𝅥)  ▹ ode-b4+)                   ∼⟨ reassoc ⟩
+  ode-b1 ▹▹ ode-b2 ▹▹ ode-b3 ▹▹ ode-b4+                                                     ∎
   where open ⇒-Reasoning
 
-
--- _ : stack ((𝅘𝅥 ⁀ 𝅝) ⁀ 𝅘𝅥) (semitones 0) M6
---   ⇒ (note (semitones 0) 𝅘𝅥𝅮 ▹ note (semitones 0) 𝅘𝅥𝅮) ▹ note (semitones 2) 𝅘𝅥 ▹ note (semitones 4) 𝅘𝅥 ▹ note (semitones 5) 𝅘𝅥 ▹ note (semitones 7) 𝅘𝅥 ▹ note (semitones 9) 𝅘𝅥
--- _ =
---   begin
---     stack ((𝅘𝅥 ⁀ 𝅝) ⁀ 𝅘𝅥) A0 M6
---   ∼⟨ arpeggiate₁ {i = M6} (𝅘𝅥 *ᵈ 5) ⟩
---     note A0 (𝅘𝅥 *ᵈ 5) ▹ note (M6 aboveᵖ A0) 𝅘𝅥
---   ∼⟨ step-motion↑ 𝅘𝅥 𝅘𝅥 M6 (A0 , ∈-diatonic p1 refl , ∈-diatonic M6 refl) ⟩
---     note A0 𝅘𝅥 ▹ (note (semitones 2) 𝅘𝅥 ▹ note (semitones 4) 𝅘𝅥 ▹ note (semitones 5) 𝅘𝅥 ▹ note (semitones 7) 𝅘𝅥 ▹ note (semitones 9) 𝅘𝅥)
---   ∼⟨ cong (rearticulate 𝅘𝅥𝅮) refl ⟩
---     (note A0 𝅘𝅥𝅮 ▹ note A0 𝅘𝅥𝅮) ▹ note (semitones 2) 𝅘𝅥 ▹ note (semitones 4) 𝅘𝅥 ▹ note (semitones 5) 𝅘𝅥 ▹ note (semitones 7) 𝅘𝅥 ▹ note (semitones 9) 𝅘𝅥
---   ∎
---   where open ⇒-Reasoning

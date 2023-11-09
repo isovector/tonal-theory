@@ -128,6 +128,8 @@ record InDiatonicCollection (pc tonic : PitchClass) : Set where
     in-collection : interval aboveᶜ tonic ≡ pc
 
 
+-- WRONG; why? doesn't use the fact that the tonic is a pitch, not a pitch
+-- class
 SameDiatonicCollection : Rel Pitch lzero
 SameDiatonicCollection p₁ p₂ =
   ∃[ t ] InDiatonicCollection (pitchClass p₁) (pitchClass t)
