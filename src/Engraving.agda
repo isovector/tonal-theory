@@ -45,6 +45,23 @@ engravePitchClass F♯ = "fis"
 engravePitchClass G  = "g"
 engravePitchClass G♯ = "gis"
 
+prettyPitchClass : PitchClass → String
+prettyPitchClass A  = "A"
+prettyPitchClass A♯ = "A♯"
+prettyPitchClass B  = "B"
+prettyPitchClass C  = "C"
+prettyPitchClass C♯ = "C♯"
+prettyPitchClass D  = "D"
+prettyPitchClass D♯ = "D♯"
+prettyPitchClass E  = "E"
+prettyPitchClass F  = "F"
+prettyPitchClass F♯ = "F♯"
+prettyPitchClass G  = "G"
+prettyPitchClass G♯ = "G♯"
+
+prettyPitch : Pitch → String
+prettyPitch p = prettyPitchClass (pitchClass p)
+
 engraveText : String → String
 engraveText msg = "\\markup { \n " ++ msg ++ " \n }"
 
@@ -83,12 +100,12 @@ prettyDuration d = "\\note {" ++ engraveDuration d ++ "} #UP"
 open import Data.Maybe using (Maybe; just; nothing)
 
 engraveReason : ∀ {l₁ l₂} → l₁ ⇒ l₂ → Maybe String
-engraveReason (rearticulate {d₂ = d₂} {d = d}  d₁ x) = just ("rearticulate " ++ prettyDuration d ++ "  into  " ++ prettyDuration d₁ ++ " and " ++ prettyDuration d₂)
-engraveReason (neighbor d₁ p₂ x) = just "neighbor"
-engraveReason (arpeggiate↑ d₁ ci x) = just "arpeggiate↑"
-engraveReason (arpeggiate↓ d₁ ci x) = just "arpeggiate↓"
-engraveReason (step-motion↑ d₁ d₂ x col x₁) = just "step motion ↑"
-engraveReason (step-motion↓ d₁ d₂ x col x₁) = just "step motion ↓"
+engraveReason {note p _} (rearticulate {d₂ = d₂} {d = d}  d₁ x) = just ("rearticulate " ++ prettyPitch p ++ " " ++ prettyDuration d ++ "  into  " ++ prettyDuration d₁ ++ " and " ++ prettyDuration d₂)
+engraveReason {note p d ▹ _} (neighbor d₁ p₂ x) = just ("neighbor " ++ prettyPitch p₂ ++ " between " ++ prettyPitch p)
+engraveReason {_} {note p d ▹ _} (arpeggiate↑ {i = i} d₁ ci x) = just ("arpeggiate chord upwards into " ++ prettyPitch p ++ " and " ++ prettyPitch (i aboveᵖ p))
+engraveReason {_} {note p d ▹ _} (arpeggiate↓ {i = i} d₁ ci x) = just ("arpeggiate chord downwards into " ++ prettyPitch (i aboveᵖ p) ++ " and " ++ prettyPitch p)
+engraveReason {note p _ ▹ _} (step-motion↑  d₁ d₂ {i = i} x (tonic , _) x₁) = just ("step motion in " ++ prettyPitch tonic ++ "M upwards from " ++ prettyPitch p ++ " to " ++ prettyPitch (i aboveᵖ p))
+engraveReason {_ ▹ note p _} (step-motion↓ d₁ d₂ {i = i} x (tonic , _) x₁) = just ("step motion in " ++ prettyPitch tonic ++ "M downwards from " ++ prettyPitch (i aboveᵖ p) ++ " to " ++ prettyPitch p)
 engraveReason delay-note = just "delay"
 engraveReason delay-stack = just "delay"
 engraveReason delay-rest = just "delay"
