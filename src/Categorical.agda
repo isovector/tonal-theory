@@ -110,3 +110,5 @@ easy-proof : IsSimpleCounterpoint {t} easy
 easy-proof = (rearticulate ⨟ same) ∣ same
 
 
+-- confirm/deny/leave hanging for consecutive notes
+-- consonant/disonnant for simultaneous notes
