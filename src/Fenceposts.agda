@@ -9,8 +9,7 @@ open import Relation.Binary using (Rel; Decidable; IsTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; sym; cong)
 open import Function using (Injective)
 open import Data.Product hiding (map)
-open import Data.Nat
-open import Data.Sum hiding (map)
+open import Data.Nat hiding (_⊔_; >-nonZero)
 open import Data.Maybe
 open import Data.Maybe.Properties using (just-injective)
 
@@ -25,18 +24,15 @@ open import Data.Nat.Properties using (+-assoc)
 
 open Data.Nat
   renaming (ℕ to Note; zero to base; suc to step; _≤_ to _≤ⁿ_)
+  hiding (_⊔_; >-nonZero)
   public
 
-open import Data.Rational
-  renaming (ℚ to Duration; _≥_ to _≥ᵈ_; _+_ to _+ᵈ_; _*_ to _*ᵈ_)
-
-open import Data.Rational.Properties
-  renaming (≤-refl to ≤ᵈ-refl)
+open import Fenceposts.Duration
 
 open import Data.Integer using (1ℤ)
 
-subdivide : ℕ → Duration → Duration
-subdivide n d = d *ᵈ (1ℤ / suc n)
+-- subdivide : ℕ → Interval → Interval
+-- subdivide n d = d *ᵈ (1ℤ / suc n)
 
 
 open import Data.Unit using (⊤; tt)
@@ -51,8 +47,8 @@ open import Data.List
 
 private variable
   n n₁ n₂ n₃ : Note
-  t t₁ t₂ t₃ : Duration
-  d d₁ d₂ d₃ : Duration
+  t t₁ t₂ t₃ : Interval
+  d d₁ d₂ d₃ : Interval
 
 data Direction : Set where
   dir↑ dir↓ : Direction
@@ -70,62 +66,66 @@ _⇑_ : Note → ℕ → Note
 n ⇑ s = n + s
 
 mutual
-  data Motion (d₁ : Duration) (d₂ : Duration) : Direction → ℕ → Duration → Rel Note lzero where
-    [_]  : Span d₁ n₁ n₂ → Motion d₁ d₂ dir 1 d₁ n₁ n₂
+  data Motion : Direction → ℕ → Rel Note lzero where
+    [_]  : Span n₁ n₂ → Motion dir 1 n₁ n₂
     _↑_ : {size : ℕ}
-           → Span d₁ n₁ (step n₁)
-           → Motion d₂ d₂ dir↑ (suc size) d (step n₁) n₂
-           → Motion d₁ d₂ dir↑ (suc (suc size)) (d₁ +ᵈ d) n₁ n₂
+           → Span n₁ (step n₁)
+           → Motion dir↑ (suc size) (step n₁) n₂
+           → Motion dir↑ (suc (suc size)) n₁ n₂
     _↓_ : {size : ℕ}
-           → Span d₁ (step n₂) n₂
-           → Motion d₂ d₂ dir↓ (suc size) d n₂ n₁
-           → Motion d₁ d₂ dir↓ (suc (suc size)) (d₁ +ᵈ d) (step n₂) n₁
+           → Span (step n₂) n₂
+           → Motion dir↓ (suc size) n₂ n₁
+           → Motion dir↓ (suc (suc size)) (step n₂) n₁
 
   -- spans are motion
-  data Span : Duration → Rel Note lzero where
-    stay : Span d n n
-    rest : Span d n n
-    rearticulate : d₁ ≥ᵈ d₂ → Span d₁ n₁ n₁ → Span d₂ n₁ n₂ → Span (d₁ +ᵈ d₂) n₁ n₂
-    step↑ : Span d n (step n)
-    step↓ : Span d (step n) n
+  data Span : Rel Note lzero where
+    stay : Span n n
+    rest : Span n n
+    rearticulate : (d : Interval) → d ≥ᵈ ½ → Span n₁ n₁ → Span n₁ n₂ → Span n₁ n₂
+    step↑ : Span n (step n)
+    step↓ : Span (step n) n
     -- trans : Consonant n₁ n₂ → Consonant n₂ n₃ → Span d n₁ n₂ → Post 1ℚ n₂ → Span d n₂ n₃ → Span d n₁ n₃
-    motion↑ : (size : ℕ) → Motion d₁ d₂ dir↑ size d n (n ⇑ size) → Span d n (n ⇑ size)
-    motion↓ : (size : ℕ) → Motion d₁ d₂ dir↓ size d (n ⇑ size) n → Span d (n ⇑ size) n
-    neighbor↑ : d₁ ≥ᵈ d₂ → Span d₁ n (step n) → Span d₂ (step n) n → Span d n n
-    neighbor↓ : d₁ ≥ᵈ d₂ → Span d₁ (step n) n → Span d₂ n (step n) → Span d (step n) (step n)
+    motion↑ : (size : ℕ) → Motion dir↑ size n (n ⇑ size) → Span n (n ⇑ size)
+    motion↓ : (size : ℕ) → Motion dir↓ size (n ⇑ size) n → Span (n ⇑ size) n
+    neighbor↑ : (d : Interval) → d ≥ᵈ ½ → Span n (step n) → Span (step n) n → Span n n
+    neighbor↓ : (d : Interval) → d ≥ᵈ ½ → Span (step n) n → Span n (step n) → Span (step n) (step n)
 
-data Section : Duration → Rel Note lzero where
-  section : Span d₁ n₁ n₂ → (d₂ : Duration) → Section (d₁ +ᵈ d₂) n₁ n₂
+-- data Section : Rel Note lzero where
+--   section : Span n₁ n₂ → (d₂ : Interval) → Section (d₁ +ᵈ d₂) n₁ n₂
 
+open import Data.Rational.Properties
+  using (≤-refl)
 
 instance
-  inst-≥ᵈ : d ≥ᵈ d
-  inst-≥ᵈ = ≤ᵈ-refl
+  inst-≥ = ≤-refl
 
-  inst-[] : ⦃ Span d n₁ n₂ ⦄ → Motion d d dir 1 d n₁ n₂
+  inst-≥ᵈ : ∀ {di} {d : RawDuration di} → d ≥ᵈ d
+  inst-≥ᵈ = ≥ᵈ-refl
+
+  inst-[] : ⦃ Span n₁ n₂ ⦄ → Motion dir 1 n₁ n₂
   inst-[] ⦃ x ⦄ = [ x ]
 
   inst-↑<>
     : ∀ {size}
-    → ⦃ Span d₁ n₁ (step n₁) ⦄
-    → ⦃ Motion d₂ d₂ dir↑ (suc size) d (step n₁) n₂ ⦄
-    → Motion d₁ d₂ dir↑ (suc (suc size)) (d₁ +ᵈ d) n₁ n₂
+    → ⦃ Span n₁ (step n₁) ⦄
+    → ⦃ Motion dir↑ (suc size) (step n₁) n₂ ⦄
+    → Motion dir↑ (suc (suc size)) n₁ n₂
   inst-↑<> ⦃ s ⦄ ⦃ m ⦄ = s ↑ m
 
   inst-↓<>
     : ∀ {size}
-    → ⦃ Span d₁ (step n₂) n₂ ⦄
-    → ⦃ Motion d₂ d₂ dir↓ (suc size) d n₂ n₁ ⦄
-    → Motion d₁ d₂ dir↓ (suc (suc size)) (d₁ +ᵈ d) (step n₂) n₁
+    → ⦃ Span (step n₂) n₂ ⦄
+    → ⦃ Motion dir↓ (suc size) n₂ n₁ ⦄
+    → Motion dir↓ (suc (suc size)) (step n₂) n₁
   inst-↓<> ⦃ s ⦄ ⦃ m ⦄ = s ↓ m
 
-  inst-stay : Span d n n
+  inst-stay : Span n n
   inst-stay = stay
 
-  inst-step↑ : Span d n _
+  inst-step↑ : Span n _
   inst-step↑ = step↑
 
-  inst-step↓ : Span d _ n
+  inst-step↓ : Span _ n
   inst-step↓ = step↓
 
 
@@ -133,29 +133,21 @@ Score : Set
 Score = List (Maybe Note × Duration)
 
 mutual
-  unparse-motion : ∀ {size} → Motion d₁ d₂ dir size d n₁ n₂ → Score
-  unparse-motion [ s ] = unparse-span s
-  unparse-motion (s ↑ m) = unparse-span s ++ unparse-motion m
-  unparse-motion (s ↓ m) = unparse-span s ++ unparse-motion m
+  unparse-motion : ∀ {size} → Duration → Motion dir size n₁ n₂ → Score
+  unparse-motion d [ s ] = unparse-span d s
+  unparse-motion d (s ↑ m) = unparse-span d s ++ unparse-motion d m
+  unparse-motion d (s ↓ m) = unparse-span d s ++ unparse-motion d m
 
-  unparse-span : Span d n₁ n₂ → Score
-  unparse-span {d} {n} stay = (just n , d) ▹ fin
-  unparse-span {d} rest = (nothing , d) ▹ fin
-  unparse-span (rearticulate _ x₁ x₂) = unparse-span x₁ ++ unparse-span x₂
-  unparse-span {d} {n} step↑ = (just n , d) ▹ fin
-  unparse-span {d} {n} step↓ = (just n , d) ▹ fin
-  unparse-span (motion↑ size x) = unparse-motion x
-  unparse-span (motion↓ size x) = unparse-motion x
-  unparse-span {d} (neighbor↑ _ x₁ x₂) = unparse-span x₁ ++ unparse-span x₂
-  unparse-span {d} (neighbor↓ _ x₁ x₂) = unparse-span x₁ ++ unparse-span x₂
-
-  -- unparse-span stay = fin
-  -- unparse-span step↑ = fin
-  -- unparse-span step↓ = fin
-  -- unparse-span (motion↑ _ m) = unparse-motion m
-  -- unparse-span (motion↓ _ m) = unparse-motion m
-  -- unparse-span (neighbor↑ s₁ p s₂) = unparse-span s₁ ++ unparse-post p ++ unparse-span s₂
-  -- unparse-span (neighbor↓ s₁ p s₂) = unparse-span s₁ ++ unparse-post p ++ unparse-span s₂
+  unparse-span : Duration → Span n₁ n₂ → Score
+  unparse-span {n} d stay = (just n , toDuration d) ▹ fin
+  unparse-span d rest = (nothing , toDuration d) ▹ fin
+  unparse-span d (rearticulate d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
+  unparse-span {n} d step↑ = (just n , d) ▹ fin
+  unparse-span {n} d step↓ = (just n , d) ▹ fin
+  unparse-span d (motion↑ size x) = unparse-motion d x
+  unparse-span d (motion↓ size x) = unparse-motion d x
+  unparse-span d (neighbor↑ d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
+  unparse-span d (neighbor↓ d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
 
 -- unparse-piece : Section n₁ n₂ → Score
 -- unparse-piece (piece start span end) = unparse-post start ++ unparse-span span ++ unparse-post end
@@ -167,12 +159,17 @@ obv ⦃ a ⦄ = a
 𝅘𝅥 = obv
 𝄽 = obv
 
-song : Span 1ℚ 0 _
-song = neighbor↑ {d₁ = ½} 𝄽 𝅘𝅥 𝅘𝅥
+song : Span 0 _
+song = neighbor↑ ½ obv 𝅘𝅥 𝅘𝅥
 
-
-_ : unparse-span song ≡ (just 0 , mkℚ (Data.Integer.+ 1) 1 _) ▹ (just 1 , mkℚ (Data.Integer.+ 1) 1 _) ▹ fin
+_ : unparse-span 𝅝 song ≡ ?
 _ = refl
+
+-- rescale : Score → Score
+-- rescale fin = fin
+-- rescale ns@((n , d) ▹ ns′) =
+--   let smallest = Data.List.foldr _⊔_ d (Data.List.map proj₂ ns′)
+--    in Data.List.map (map₂ (_÷ smallest)) ns
 
 -- _▹[_]_ : Span 1ℚ n₁ n₂ → Post _ → Span 1ℚ _ n₃ → Span 1ℚ _ _
 -- _▹[_]_ = trans tt tt
