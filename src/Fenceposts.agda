@@ -9,7 +9,7 @@ open import Relation.Binary using (Rel; Decidable; IsTotalOrder)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; sym; cong)
 open import Function using (Injective)
 open import Data.Product hiding (map)
-open import Data.Nat hiding (_⊔_; >-nonZero)
+open import Data.Nat
 open import Data.Maybe
 open import Data.Maybe.Properties using (just-injective)
 
@@ -41,8 +41,7 @@ Consonant : Rel Note lzero
 Consonant _ _ = ⊤
 
 open import Data.List
-  renaming ([] to fin; _∷_ to _▹_)
-  using (List; _++_; _∷ʳ_)
+  using (List; _∷_; []; _++_; _∷ʳ_)
   public
 
 private variable
@@ -63,7 +62,7 @@ private variable
 infixr 4 _↑_ _↓_
 
 _⇑_ : Note → ℕ → Note
-n ⇑ s = n + s
+n ⇑ s = s + n
 
 mutual
   data Motion : Direction → ℕ → Rel Note lzero where
@@ -81,14 +80,14 @@ mutual
   data Span : Rel Note lzero where
     stay : Span n n
     rest : Span n n
-    rearticulate : (d : Interval) → d ≥ᵈ ½ → Span n₁ n₁ → Span n₁ n₂ → Span n₁ n₂
+    rearticulate : (d : Interval) → ⦃ d ≥ᵈ ½ ⦄ → Span n₁ n₁ → Span n₁ n₂ → Span n₁ n₂
     step↑ : Span n (step n)
     step↓ : Span (step n) n
-    -- trans : Consonant n₁ n₂ → Consonant n₂ n₃ → Span d n₁ n₂ → Post 1ℚ n₂ → Span d n₂ n₃ → Span d n₁ n₃
-    motion↑ : (size : ℕ) → Motion dir↑ size n (n ⇑ size) → Span n (n ⇑ size)
-    motion↓ : (size : ℕ) → Motion dir↓ size (n ⇑ size) n → Span (n ⇑ size) n
-    neighbor↑ : (d : Interval) → d ≥ᵈ ½ → Span n (step n) → Span (step n) n → Span n n
-    neighbor↓ : (d : Interval) → d ≥ᵈ ½ → Span (step n) n → Span n (step n) → Span (step n) (step n)
+    trans : Consonant n₁ n₂ → Consonant n₂ n₃ → Span n₁ n₂ → Span n₂ n₃ → Span n₁ n₃
+    motion↑ : (size : ℕ) → (d : Interval) → Motion dir↑ size n (n ⇑ size) → Span n (n ⇑ size)
+    motion↓ : (size : ℕ) → (d : Interval) → Motion dir↓ size (n ⇑ size) n → Span (n ⇑ size) n
+    neighbor↑ : (d : Interval) → ⦃ d ≥ᵈ ½ ⦄ → Span n (step n) → Span (step n) n → Span n n
+    neighbor↓ : (d : Interval) → ⦃ d ≥ᵈ ½ ⦄ → Span (step n) n → Span n (step n) → Span (step n) (step n)
 
 -- data Section : Rel Note lzero where
 --   section : Span n₁ n₂ → (d₂ : Interval) → Section (d₁ +ᵈ d₂) n₁ n₂
@@ -110,6 +109,7 @@ instance
     → ⦃ Span n₁ (step n₁) ⦄
     → ⦃ Motion dir↑ (suc size) (step n₁) n₂ ⦄
     → Motion dir↑ (suc (suc size)) n₁ n₂
+
   inst-↑<> ⦃ s ⦄ ⦃ m ⦄ = s ↑ m
 
   inst-↓<>
@@ -139,45 +139,71 @@ mutual
   unparse-motion d (s ↓ m) = unparse-span d s ++ unparse-motion d m
 
   unparse-span : Duration → Span n₁ n₂ → Score
-  unparse-span {n} d stay = (just n , toDuration d) ▹ fin
-  unparse-span d rest = (nothing , toDuration d) ▹ fin
-  unparse-span d (rearticulate d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
-  unparse-span {n} d step↑ = (just n , d) ▹ fin
-  unparse-span {n} d step↓ = (just n , d) ▹ fin
-  unparse-span d (motion↑ size x) = unparse-motion d x
-  unparse-span d (motion↓ size x) = unparse-motion d x
-  unparse-span d (neighbor↑ d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
-  unparse-span d (neighbor↓ d₁ _ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
-
--- unparse-piece : Section n₁ n₂ → Score
--- unparse-piece (piece start span end) = unparse-post start ++ unparse-span span ++ unparse-post end
+  unparse-span {n} d stay = (just n , toDuration d) ∷ []
+  unparse-span d rest = (nothing , toDuration d) ∷ []
+  unparse-span d (rearticulate d₁ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
+  unparse-span {n} d step↑ = (just n , d) ∷ []
+  unparse-span {n} d step↓ = (just n , d) ∷ []
+  unparse-span d (trans _ _ x₁ x₂) = unparse-span d x₁ ++ unparse-span d x₂
+  unparse-span d (motion↑ size i x) = unparse-motion d x
+  unparse-span d (motion↓ size i x) = unparse-motion d x
+  unparse-span d (neighbor↑ d₁ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
+  unparse-span d (neighbor↓ d₁ x₁ x₂) = unparse-span (toDuration d₁ *ᵈ d) x₁ ++ unparse-span (toDuration (d₁ ⁺) *ᵈ d) x₂
 
 
 obv : {A : Set} → ⦃ a : A ⦄ → A
 obv ⦃ a ⦄ = a
 
-𝅘𝅥 = obv
-𝄽 = obv
+∙ : ⦃ Span n₁ n₂ ⦄ → Span n₁ n₂
+∙ = obv
+
+⇒ : ∀ {sz} → ⦃ Motion dir sz n₁ n₂ ⦄ → Motion dir sz n₁ n₂
+⇒ = obv
+
+𝄩 : Interval
+𝄩 = ½
+
+
+𝄽 : Span n n
+𝄽 = rest
 
 song : Span 0 _
-song = neighbor↑ ½ obv 𝅘𝅥 𝅘𝅥
+song = neighbor↑ 𝄩 (rearticulate 𝄩 ∙ ∙) (rearticulate 𝄩 (neighbor↑ 𝄩 ∙ ∙) ∙)
 
-_ : unparse-span 𝅝 song ≡ ?
+mutual
+  motion-complexity : ∀ {sz} → Motion dir sz n₁ n₂ → ℕ
+  motion-complexity [ x ] = complexity x
+  motion-complexity (x ↑ x₁) = complexity x ⊔ motion-complexity x₁
+  motion-complexity (x ↓ x₁) = complexity x ⊔ motion-complexity x₁
+
+  complexity : Span n₁ n₂ → ℕ
+  complexity stay = 0
+  complexity rest = 0
+  complexity (rearticulate d x x₁) = suc (complexity x ⊔ complexity x₁)
+  complexity step↑ = 0
+  complexity step↓ = 0
+  complexity (motion↑ size i x) = suc (motion-complexity x)
+  complexity (motion↓ size i x) = suc (motion-complexity x)
+  complexity (trans _ _ x x₁) = suc (complexity x ⊔ complexity x₁)
+  complexity (neighbor↑ d x x₁) = suc (complexity x ⊔ complexity x₁)
+  complexity (neighbor↓ d x x₁) = suc (complexity x ⊔ complexity x₁)
+
+_▹_ : Span n₁ n₂ → Span n₂ n₃ → Span n₁ n₃
+_▹_ = trans tt tt
+
+infixr 4 _▹_
+
+ode : Span 2 2
+ode = rearticulate 𝄩 ( motion↑ 2 𝄩 ⇒
+                     ▹ motion↓ 4 𝄩 ⇒
+                     ▹ motion↑ 2 𝄩 ⇒
+                     ) (neighbor↓ 𝄩 ∙ (rearticulate 𝄩 ∙ ∙))
+
+_ : complexity ode ≡ 4
 _ = refl
 
--- rescale : Score → Score
--- rescale fin = fin
--- rescale ns@((n , d) ▹ ns′) =
---   let smallest = Data.List.foldr _⊔_ d (Data.List.map proj₂ ns′)
---    in Data.List.map (map₂ (_÷ smallest)) ns
-
--- _▹[_]_ : Span 1ℚ n₁ n₂ → Post _ → Span 1ℚ _ n₃ → Span 1ℚ _ _
--- _▹[_]_ = trans tt tt
-
--- infixr 4 _▹[_]_
-
 -- ode : Section 2 _
--- Section.start ode = rearticulate 2 obv
+-- Section.start ode = rearticulate 2 ob?
 -- Section.span ode =
 --   motion↑ 2 𝅘𝅥 ▹[ rearticulate _ 𝅘𝅥 ]
 --   motion↓ 4 𝅘𝅥 ▹[ rearticulate _ 𝅘𝅥 ]
@@ -186,8 +212,4 @@ _ = refl
 --   rearticulate _ (
 --     𝅘𝅥 ▹[ 𝅘𝅥 ]
 --     neighbor↓ 𝅘𝅥 (rearticulate _ 𝅘𝅥) 𝅘𝅥)
-
--- _ : unparse-piece ode ≡ 2 ▹ 2 ▹ 3 ▹ 4 ▹ 4 ▹ 3 ▹ 2 ▹ 1 ▹ 0 ▹ 0 ▹ 1 ▹ 2 ▹ 2 ▹ 1 ▹ 1 ▹ 2 ▹ fin
--- _ = refl
-
 
