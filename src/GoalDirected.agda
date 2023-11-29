@@ -71,7 +71,7 @@ record IsCounterpoint (SongLines : Line → Set) : Set where
            → n ∈ l₂
            → l₁ ≡ l₂
 
-module _ {l : Line} {n₁ n₂ : Note} (n₁-in : n₁ ∈ l) (n₂-in : n₂ ∈ l) where
+module _ (l : Line) {n₁ n₂ : Note} (n₁-in : n₁ ∈ l) (n₂-in : n₂ ∈ l) where
   record IsRepetition : Set where
     field
       is-repetition : Note.pitch n₁ ≡ Note.pitch n₂
@@ -87,20 +87,30 @@ module _ {l : Line} {n₁ n₂ : Note} (n₁-in : n₁ ∈ l) (n₂-in : n₂ �
   postulate
     categorize : Tri IsRepetition IsStep IsSkip
 
+
 data Status : Set where
   confirmed rejected hanging : Status
 
-dropUntil : Time → (l : List Note) → Linked Consecutive l → Line
-dropUntil t₀ [] [] = [] , []
-dropUntil t₀ (note p t d ∷ .[]) [-]
-  with t₀ ≤? t
-... | yes t₀≤t = note p t d ∷ [] , [-]
-... | no ¬t₀≤t = [] , []
-dropUntil t₀ (note p t d ∷ x ∷ xs) (rel ∷ rels)
-  with t₀ ≤? t
-... | yes t₀≤t = note p t d ∷ x ∷ xs , rel ∷ rels
-... | no ¬t₀≤t = dropUntil t₀ (x ∷ xs) rels
 
-statusOf : note p t d ∈ l → (tₑ : Time) → t ≤ tₑ → Status
-statusOf {n} {t₀} {d} {l} n∈l tₑ t₀≤tₑ = ?
+data Resolves (l : Line) (n₁∈ : n₁ ∈ l) (n₂∈ : n₂ ∈ l) : Status → Set where
+  confirms : Note.time n₁ < Note.time n₂ → IsRepetition l n₁∈ n₂∈ → Resolves l n₁∈ n₂∈ confirmed
+  rejects  : Note.time n₁ < Note.time n₂ → IsStep       l n₁∈ n₂∈ → Resolves l n₁∈ n₂∈ rejected
+
+
+record ResolvedAs (l : Line) (n₁∈ : n₁ ∈ l) : Set where
+  inductive
+  field
+    {resolving} : Note
+    resolving∈ : resolving ∈ l
+    status : Status
+    resolution : Resolves l n₁∈ resolving∈ status
+    unique
+      : (n∈ : n ∈ l)
+      → Note.time n₁ < Note.time n
+      → Note.time n < Note.time resolving
+      → ¬ Σ Status (Resolves l n₁∈ n∈)
+
+-- postulate
+--   statusOf : (n∈ : n ∈ l) → (tₑ : Time) → (Note.time n ≤ tₑ) → Dec (Resolved l n∈)
+
 
