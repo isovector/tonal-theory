@@ -1,4 +1,6 @@
-module GoalDirected where
+open import Setwise.Base
+
+module Setwise.Machinery (NoteOfSong : Note → Set) where
 
 open import Data.List
 open import Data.Nat
@@ -12,24 +14,7 @@ open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Data.Sum
 
-Pitch : Set
-Pitch = ℕ
-
-Time : Set
-Time = ℕ
-
-Duration : Set
-Duration = ℕ
-
-record Note : Set where
-  constructor note
-  field
-    pitch    : Pitch
-    time     : Time
-    duration : Duration
-
 postulate
-  NoteOfSong : Note → Set
   IsStepInterval : Rel Pitch lzero
   IsSkipInterval : Rel Pitch lzero
 
@@ -44,7 +29,7 @@ data Consecutive : Rel Note lzero where
     : NoteOfSong (note p₁ t₁ d₁)
     → NoteOfSong (note p₂ t₂ d₂)
     → t₁ + d₁ ≤ t₂
-    → Consecutive (note p₁ t₁ d₁) (note p₂ d₂ d₂)
+    → Consecutive (note p₁ t₁ d₁) (note p₂ t₂ d₂)
 
 Line : Set
 Line = Σ (List Note) (Linked Consecutive)
@@ -93,11 +78,17 @@ data Status : Set where
 
 
 data Resolves (l : Line) (n₁∈ : n₁ ∈ l) (n₂∈ : n₂ ∈ l) : Status → Set where
-  confirms : Note.time n₁ < Note.time n₂ → IsRepetition l n₁∈ n₂∈ → Resolves l n₁∈ n₂∈ confirmed
-  rejects  : Note.time n₁ < Note.time n₂ → IsStep       l n₁∈ n₂∈ → Resolves l n₁∈ n₂∈ rejected
+  confirms
+    : Note.time n₁ < Note.time n₂
+    → IsRepetition l n₁∈ n₂∈
+    → Resolves l n₁∈ n₂∈ confirmed
+  rejects
+    : Note.time n₁ < Note.time n₂
+    → IsStep l n₁∈ n₂∈
+    → Resolves l n₁∈ n₂∈ rejected
 
 
-record ResolvedAs (l : Line) (n₁∈ : n₁ ∈ l) : Set where
+record Resolution (l : Line) (n₁∈ : n₁ ∈ l) : Set where
   inductive
   field
     {resolving} : Note
@@ -107,10 +98,10 @@ record ResolvedAs (l : Line) (n₁∈ : n₁ ∈ l) : Set where
     unique
       : (n∈ : n ∈ l)
       → Note.time n₁ < Note.time n
-      → Note.time n < Note.time resolving
+      → Note.time n  < Note.time resolving
       → ¬ Σ Status (Resolves l n₁∈ n∈)
 
--- postulate
---   statusOf : (n∈ : n ∈ l) → (tₑ : Time) → (Note.time n ≤ tₑ) → Dec (Resolved l n∈)
+postulate
+  statusOf : (n∈ : n ∈ l) → (tₑ : Time) → Note.time n ≤ tₑ → Dec (Resolution l n∈)
 
 
