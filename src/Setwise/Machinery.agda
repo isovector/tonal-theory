@@ -2,13 +2,13 @@ open import Setwise.Base
 
 module Setwise.Machinery (NoteOfSong : Note → Set) where
 
-open import Data.List
+open import Data.List hiding (reverse; _∷ʳ_)
 open import Data.Nat
 open import Data.Nat.Properties using (_≤?_)
 open import Relation.Binary using (Rel; Tri)
 open import Agda.Primitive using (lzero)
 open import Relation.Nullary
-open import Data.List.Relation.Unary.Linked
+open import Data.List.Relation.Unary.Linked using (Linked)
 open import Data.List.Membership.Propositional renaming (_∈_ to is-in)
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
@@ -101,7 +101,43 @@ record Resolution (l : Line) (n₁∈ : n₁ ∈ l) : Set where
       → Note.time n  < Note.time resolving
       → ¬ Σ Status (Resolves l n₁∈ n∈)
 
-postulate
-  statusOf : (n∈ : n ∈ l) → (tₑ : Time) → Note.time n ≤ tₑ → Dec (Resolution l n∈)
 
+data Snoc {ℓ : _} (A : Set ℓ) : Set ℓ where
+  []  : Snoc A
+  _∷ʳ_ : Snoc A → A → Snoc A
+
+infixl 5 _∷ʳ_
+
+snocify : ∀ {ℓ} {A : Set ℓ} → List A → Snoc A
+snocify {A = A} = go []
+  where
+    go : Snoc A → List A → Snoc A
+    go acc [] = acc
+    go acc (x ∷ xs) = go (acc ∷ʳ x) xs
+
+test : List ℕ
+test = 1 ∷ 2 ∷ 3 ∷ []
+
+open import Data.Bool using (Bool; true; false; not)
+
+isStep : Pitch → Pitch → Bool
+isStep zero zero = true
+isStep zero (suc zero) = true
+isStep zero (suc (suc x₁)) = false
+isStep (suc zero) zero = true
+isStep (suc zero) (suc y) = isStep zero y
+isStep (suc (suc x)) zero = false
+isStep (suc (suc x)) (suc y) = isStep (suc x) y
+
+open import Function using (_∘_)
+
+removeSteps : Pitch → List Note → List Note
+removeSteps x = boolFilter (not ∘ isStep x ∘ Note.pitch)
+
+leftHanging : List Note → List Note
+leftHanging = go ∘ snocify
+  where
+    go : Snoc Note → List Note
+    go [] = []
+    go (x ∷ʳ n) = n ∷ removeSteps (Note.pitch n) (go x)
 

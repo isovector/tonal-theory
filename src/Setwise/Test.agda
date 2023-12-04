@@ -10,7 +10,7 @@ open import Data.List.Relation.Unary.Any hiding (lookup)
 open import Relation.Binary.PropositionalEquality hiding ([_])
 
 ode-pitches : List Pitch
-ode-pitches = e ∷ e ∷ f ∷ g
+ode-pitches = g ∷ e ∷ f ∷ g
             ∷ g ∷ f ∷ e ∷ d
             ∷ c ∷ c ∷ d ∷ e
             ∷ e ∷ d ∷ d ∷ []
@@ -29,25 +29,28 @@ ode = pitch-to-notes ode-pitches
 
 open import Setwise.Machinery (_∈ ode)
 
+_ : Data.List.map leftHanging (inits ode) ≡ ?
+_ = refl
 
-ode-list : Line
-ode-list = ode , consecutive (here refl) (there (here refl)) (s≤s z≤n)
-               ∷ consecutive (there (here refl)) (there (there (here refl))) (s≤s (s≤s z≤n))
-               ∷ consecutive (there (there (here refl))) (there (there (there (here refl)))) (s≤s (s≤s (s≤s z≤n)))
-               ∷ consecutive (there (there (there (here refl)))) (there (there (there (there (here refl))))) (s≤s (s≤s (s≤s (s≤s z≤n))))
-               ∷ consecutive (there (there (there (there (here refl))))) (there (there (there (there (there (here refl)))))) (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))
-               ∷ consecutive (there (there (there (there (there (here refl)))))) (there (there (there (there (there (there (here refl))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))
-               ∷ consecutive (there (there (there (there (there (there (here refl))))))) (there (there (there (there (there (there (there (here refl)))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))
-               ∷ consecutive (there (there (there (there (there (there (there (here refl)))))))) (there (there (there (there (there (there (there (there (here refl))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (here refl))))))))) (there (there (there (there (there (there (there (there (there (here refl)))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (there (here refl)))))))))) (there (there (there (there (there (there (there (there (there (there (here refl))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (there (there (here refl))))))))))) (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))))
-               ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))))
-               ∷ [-]
 
-ode-is-counterpoint : IsCounterpoint (_≡ ode-list)
-IsCounterpoint.total ode-is-counterpoint x = ode-list , refl , x
-IsCounterpoint.unique ode-is-counterpoint refl refl x₂ x₃ = refl
+-- ode-list : Line
+-- ode-list = ode , consecutive (here refl) (there (here refl)) (s≤s z≤n)
+--                ∷ consecutive (there (here refl)) (there (there (here refl))) (s≤s (s≤s z≤n))
+--                ∷ consecutive (there (there (here refl))) (there (there (there (here refl)))) (s≤s (s≤s (s≤s z≤n)))
+--                ∷ consecutive (there (there (there (here refl)))) (there (there (there (there (here refl))))) (s≤s (s≤s (s≤s (s≤s z≤n))))
+--                ∷ consecutive (there (there (there (there (here refl))))) (there (there (there (there (there (here refl)))))) (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))
+--                ∷ consecutive (there (there (there (there (there (here refl)))))) (there (there (there (there (there (there (here refl))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))
+--                ∷ consecutive (there (there (there (there (there (there (here refl))))))) (there (there (there (there (there (there (there (here refl)))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (here refl)))))))) (there (there (there (there (there (there (there (there (here refl))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (here refl))))))))) (there (there (there (there (there (there (there (there (there (here refl)))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (there (here refl)))))))))) (there (there (there (there (there (there (there (there (there (there (here refl))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (there (there (here refl))))))))))) (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))))
+--                ∷ consecutive (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl)))))))))))))) (there (there (there (there (there (there (there (there (there (there (there (there (there (there (here refl))))))))))))))) (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))))
+--                ∷ [-]
+
+-- ode-is-counterpoint : IsCounterpoint (_≡ ode-list)
+-- IsCounterpoint.total ode-is-counterpoint x = ode-list , refl , x
+-- IsCounterpoint.unique ode-is-counterpoint refl refl x₂ x₃ = refl
 
