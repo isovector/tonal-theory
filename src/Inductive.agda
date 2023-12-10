@@ -81,11 +81,15 @@ postulate
 open import Data.Product
 
 splitIntoLines : ∀ m → ∃₂ λ x y → m ≡ (x ∣ y)
-splitIntoLines (note p d) = note p d , 𝄽 d , sym (∣-unitʳ (note p d))
-splitIntoLines (𝄽 x) = 𝄽 x , 𝄽 x , sym (∣-idem (𝄽 x))
+splitIntoLines n@(note p d) = n , 𝄽 d , sym (∣-unitʳ n)
+splitIntoLines n@(𝄽 x) = n , n , sym (∣-idem n)
 splitIntoLines (m ▹ n)
   with splitIntoLines n
-... | n₁ , n₂ , refl =  m ▹ n₁ , m ▹ n₂ , trans (cong (_▹ _) (sym (∣-idem m))) (sym (distrib m n₁ m n₂ refl))
+... | n₁ , n₂ , refl
+    = m ▹ n₁
+    , m ▹ n₂
+    , sym (trans (distrib m n₁ m n₂ refl)
+                 (cong (_▹ _) (∣-idem m)))
 splitIntoLines (m ∣ n) = m , n , refl
 
 open import Data.Empty
