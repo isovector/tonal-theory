@@ -2,6 +2,15 @@ open import Setwise.Base
 
 module Setwise.Machinery (NoteOfSong : Note → Set) where
 
+-- Can give combinators for building NoteOfSong
+-- transposition in time
+-- parallel: _⊎_
+-- sequential: _×_ st we transpose them in time
+--
+-- then do we have a ring over parallel and seq?
+--   parallel is monoidal and idempotent; zero is silence aka nothing
+--   sequence is semigroupal certainly; no obvious zero? unless it's the same zero
+
 open import Data.List hiding (reverse; _∷ʳ_)
 open import Data.Nat
 open import Data.Nat.Properties using (_≤?_)
@@ -140,4 +149,13 @@ leftHanging = go ∘ snocify
     go : Snoc Note → List Note
     go [] = []
     go (x ∷ʳ n) = n ∷ removeSteps (Note.pitch n) (go x)
+
+-- What can we say from here?
+--
+-- ↪ Westergaard's counterpoint rules only leave triad notes hanging
+-- ↪ Something about causal parsing
+-- ↪ It's possible to decide property X within Y bars
+-- ↪ We can establish primary beats
+-- ↪
+--
 
