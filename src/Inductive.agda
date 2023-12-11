@@ -93,15 +93,12 @@ module _ where
   concurrently (inj₁ (p , d)) m = note p d ▹ m
   concurrently (inj₂ d)       m = 𝄽 d      ▹ m
 
+  toLine : List Atom → Music
+  toLine = foldr concurrently ⊘
+
   concurrentLines : Music → List (List Atom) → Music
   concurrentLines m₀ =
-    foldr (λ l m → foldr concurrently ⊘ l ∣ m) m₀
-
-  sequentialChords : List (List Atom) → Music
-  sequentialChords =
-    foldr (λ l m → foldr (λ { (inj₁ (p , d)) m → note p d ∣ m
-                            ; (inj₂ d) m       → 𝄽 d      ∣ m
-                            }) ⊘ l ▹ m) ⊘
+    foldr (λ l m → toLine l ∣ m) m₀
 
   lemma₃ : ∀ x ml n → concurrentLines x ml ∣ n ≡ concurrentLines (x ∣ n) ml
   lemma₃ x [] n = refl
@@ -120,10 +117,8 @@ module _ where
       concurrentLines ((x ∣ n) ∣ foldr concurrently ⊘ m) ms
     ≡⟨ cong (λ φ → concurrentLines φ ms) (∣-comm _ _) ⟩
       concurrentLines (foldr concurrently ⊘ m ∣ (x ∣ n)) ms
-    ≡⟨⟩
-      foldr (λ l m → foldr concurrently (𝄽 0) l ∣ m) (foldr concurrently (𝄽 0) m ∣ x ∣ n) ms
-    ≡⟨ cong (λ φ → foldr (λ l m → foldr concurrently (𝄽 0) l ∣ m) φ ms) (∣-comm _ _) ⟩
-      foldr (λ l m → foldr concurrently (𝄽 0) l ∣ m) ((x ∣ n) ∣ foldr concurrently (𝄽 0) m) ms
+    ≡⟨ cong (λ φ → foldr (λ l m → foldr concurrently ⊘ l ∣ m) φ ms) (∣-comm _ _) ⟩
+      foldr (λ l m → foldr concurrently ⊘ l ∣ m) ((x ∣ n) ∣ foldr concurrently ⊘ m) ms
     ≡⟨ sym (lemma₃ (x ∣ n) ms _)  ⟩
       concurrentLines (x ∣ n) ms ∣ foldr concurrently ⊘ m
     ≡⟨ ∣-comm _ _  ⟩
@@ -133,13 +128,55 @@ module _ where
     ∎
     where open ≡-Reasoning
 
-  splitIntoLines : ∀ m → ∃[ l ] m ≡ concurrentLines ⊘ l
-  splitIntoLines a@(note p d) = [ [ inj₁ (p , d) ] ] , sym (trans (∣-unitʳ (a ▹ ⊘) 0 z≤n) (▹-unitʳ a))
-  splitIntoLines a@(𝄽 d)      = [ [ inj₂      d  ] ] , sym (trans (∣-unitʳ (a ▹ ⊘) 0 z≤n) (▹-unitʳ a))
+  open import Data.These using (These; this; that; these)
+
+  aligning : ℕ → ℕ → List (List Atom) → List (List Atom) → List (List Atom)
+  aligning dm dn = alignWith  (λ { (this x) → x ∷ʳ inj₂ dn ; (that x) → x ∷ʳ inj₂ dm ; (these x y) → x ++ y })
+
+  open import Data.List.Relation.Unary.All
+
+  lemma₄ : ∀ {dm dn} ml nl
+         → All (λ l → dur (toLine l) ≡ dm) ml
+         → All (λ l → dur (toLine l) ≡ dn) nl
+         → concurrentLines ⊘ ml ▹ concurrentLines ⊘ nl ≡ concurrentLines ⊘ (aligning dm dn ml nl)
+         × All (λ l → dur (toLine l) ≡ dm + dn) (aligning dm dn ml nl)
+  lemma₄ {dm} {dn} [] nl x x₁ = {! !} , {! !}
+  lemma₄ {dm} {dn} (ml ∷ ml₁) [] x x₁ = {! !}
+  lemma₄ {dm} {dn} (ml ∷ ml₁) (nl ∷ nl₁) (px ∷ x) (px₁ ∷ x₁) = {! !}
+
+  -- lemma₄ [] nl = trans (▹-unitˡ _) (cong (concurrentLines ⊘) (sym (map-id nl)))
+  -- lemma₄ (m ∷ ms) [] =
+  --   begin
+  --     concurrentLines ⊘ (m ∷ ms) ▹ concurrentLines ⊘ []
+  --   ≡⟨⟩
+  --     (foldr concurrently (𝄽 0) m ∣ foldr (λ l → _∣_ (foldr concurrently (𝄽 0) l)) (𝄽 0) ms) ▹ 𝄽 0
+  --   ≡⟨ ▹-unitʳ _ ⟩
+  --     (foldr concurrently (𝄽 0) m ∣ foldr (λ l → _∣_ (foldr concurrently (𝄽 0) l)) (𝄽 0) ms)
+  --   ≡⟨ cong (λ φ → (foldr concurrently (𝄽 0) m ∣ foldr (λ l → _∣_ (foldr concurrently (𝄽 0) l)) (𝄽 0) φ)) (sym (map-id ms)) ⟩
+  --     foldr concurrently (𝄽 0) m ∣ foldr (λ l → _∣_ (foldr concurrently (𝄽 0) l)) (𝄽 0) (map (λ x → x) ms)
+  --   ≡⟨⟩
+  --     concurrentLines ⊘ (aligning (m ∷ ms) [])
+  --   ∎
+  --   where open ≡-Reasoning
+  -- lemma₄ (m ∷ ms) (n ∷ ns) =
+  --   begin
+  --     concurrentLines ⊘ (m ∷ ms) ▹ concurrentLines ⊘ (n ∷ ns)
+  --   ≡⟨⟩
+  --     (foldr concurrently ⊘ m ∣ concurrentLines ⊘ ms) ▹ (foldr concurrently ⊘ n ∣ concurrentLines ⊘ ns)
+  --   ≡⟨ ? ⟩
+  --     foldr concurrently ⊘ (m ++ n) ∣ concurrentLines ⊘ (aligning ms ns)
+  --   ≡⟨⟩
+  --     concurrentLines ⊘ (aligning (m ∷ ms) (n ∷ ns))
+  --   ∎
+  --   where open ≡-Reasoning
+
+  splitIntoLines : ∀ m → ∃₂ λ ls d → (m ≡ concurrentLines ⊘ ls) × All (λ l → dur (toLine l) ≡ d) ls
+  splitIntoLines a@(note p d) = [ [ inj₁ (p , d) ] ] , d , sym (trans (∣-unitʳ (a ▹ ⊘) 0 z≤n) (▹-unitʳ a)) , +-identityʳ d ∷ []
+  splitIntoLines a@(𝄽 d)      = [ [ inj₂      d  ] ] , d , sym (trans (∣-unitʳ (a ▹ ⊘) 0 z≤n) (▹-unitʳ a)) , +-identityʳ d ∷ []
   splitIntoLines (m ▹ n) with splitIntoLines m | splitIntoLines n
-  ... | ml , mp | nl , np = {! !}
+  ... | ml , md , refl , ma | nl , nd , refl , na = aligning md nd ml nl , md + nd , lemma₄ ml nl ma na
   splitIntoLines (m ∣ n) with splitIntoLines m | splitIntoLines n
-  ... | ml , mp | nl , np = ml ++ nl ,
+  ... | ml , md , mp , ma | nl , nd , np , na = ml ++ nl , md ⊔ nd ,
     (begin
       m ∣ n
     ≡⟨ cong (_∣ _) mp ⟩
@@ -152,25 +189,21 @@ module _ where
       concurrentLines (concurrentLines ⊘ nl) ml
     ≡⟨ sym (foldr-++ _ ⊘ ml nl) ⟩
       concurrentLines ⊘ (ml ++ nl)
-    ∎)
+    ∎) , ?
     where open ≡-Reasoning
 
 
--- splitIntoLines n@(note p d) = ?
--- splitIntoLines n@(𝄽 x)      = n , n   , sym (∣-idem n)
--- splitIntoLines (m ▹ n)
---   with splitIntoLines n
--- ... | n₁ , n₂ , refl
---     = m ▹ n₁
---     , m ▹ n₂
---     , sym (trans (interchange m n₁ m n₂ refl)
---                  (cong (_▹ _) (∣-idem m)))
--- splitIntoLines (m ∣ n) = m , n , refl
+  open import Data.Empty
+  open import Relation.Nullary
 
-open import Data.Empty
-open import Relation.Nullary
+  sequentialChords : List (List Atom) → Music
+  sequentialChords =
+    foldr (λ l m → foldr (λ { (inj₁ (p , d)) m → note p d ∣ m
+                            ; (inj₂ d) m       → 𝄽 d      ∣ m
+                            }) ⊘ l ▹ m) ⊘
 
-notSequential : ¬ (∀ m → ∃₂ λ x y → m ≡ (x ▹ y))
-notSequential f with f (note 1 1 ∣ note 2 2)
-... | x , y , ()
+  notSequential : ¬ (∀ m → ∃[ l ] m ≡ sequentialChords l)
+  notSequential f with f (note 1 1 ∣ note 2 2)
+  ... | [] , ()
+  ... | x ∷ x₁ , ()
 
