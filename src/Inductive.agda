@@ -35,7 +35,7 @@ private variable
 ⊘ = 𝄽 0
 
 
--- We can therefore measure the total duration of a piece of music:
+-- We can measure the total duration of a piece of music:
 dur : Music → ℕ
 dur (𝅘𝅥 x d) = d
 dur (𝄽 d) = d
@@ -64,7 +64,7 @@ postulate
   ∣-comm  : ∀ m n
           → m ∣ n ≡ n ∣ m
 
-  -- Parallel is idempotet
+  -- Parallel is idempotent
   ∣-idem  : ∀ m
           → m ∣ m ≡ m
 
@@ -104,7 +104,7 @@ postulate
   where open ≡-Reasoning
 
 -- We can freely duplicate sequential composition into parallel composition:
-elim-head : (a b c : Music) → a ▹ b ∣ a ▹ c ≡ a ▹ (b ∣ c)
+elim-head : (a b c : Music) → (a ▹ b) ∣ (a ▹ c) ≡ a ▹ (b ∣ c)
 elim-head a b c = begin
   a ▹ b ∣ a ▹ c      ≡⟨ interchange _ _ _ _ refl ⟩
   (a ∣ a) ▹ (b ∣ c)  ≡⟨ cong (_▹ _) (∣-idem _) ⟩
@@ -139,29 +139,34 @@ delayed-par x y = begin
 -- a collection of parallel lines of sequential notes.
 
 -- Seq is capable only of expressing sequential music
-data Seq (A : Music → Set) : Music → Set where
-  embed : ∀ {m} → A m → Seq A m
-  𝅘𝅥 : Seq A (𝅘𝅥 p d)
-  𝄽 : Seq A (𝄽 d)
-  _▹_ : Seq A x → Seq A y → Seq A (x ▹ y)
+data Seq (Embed : Music → Set) : Music → Set where
+  embed : Embed m → Seq Embed m
+  𝅘𝅥 : Seq Embed (𝅘𝅥 p d)
+  𝄽 : Seq Embed (𝄽 d)
+  _▹_ : Seq Embed x → Seq Embed y → Seq Embed (x ▹ y)
 
 -- Par is capable only of expressing parallel music
-data Par (A : Music → Set) : Music → Set where
-  embed : ∀ {m} → A m → Par A m
-  𝅘𝅥 : Par A (𝅘𝅥 p d)
-  𝄽 : Par A (𝄽 d)
-  _∣_ : Par A x → Par A y → Par A (x ∣ y)
+data Par (Embed : Music → Set) : Music → Set where
+  embed : Embed m → Par Embed m
+  𝅘𝅥 : Par Embed (𝅘𝅥 p d)
+  𝄽 : Par Embed (𝄽 d)
+  _∣_ : Par Embed x → Par Embed y → Par Embed (x ∣ y)
 
 
 open import Data.Empty
 
--- Parallel lines of sequential music
+-- A helper type to bottom out our embedding (in essence saying the `embed`
+-- constructor above cannot be used.)
+NoFurtherEmbedding : Music → Set
+NoFurtherEmbedding _ = ⊥
+
+-- Parallel lines of sequential music (aka counterpoint)
 ParSeq : Music → Set
-ParSeq = Par (Seq (λ _ → ⊥))
+ParSeq = Par (Seq NoFurtherEmbedding)
 
 -- Sequences of parallel music (aka sequences of chords)
 SeqPar : Music → Set
-SeqPar = Seq (Par (λ _ → ⊥))
+SeqPar = Seq (Par NoFurtherEmbedding)
 
 -- Given a ParSeq of m and n, we can give a ParSeq of m ▹→∣ n
 _▹→∣ₚ_ : ParSeq m → ParSeq n → ParSeq (m ▹→∣ n)
