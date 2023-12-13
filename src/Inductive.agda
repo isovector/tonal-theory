@@ -38,9 +38,9 @@ private variable
 -- We can measure the total duration of a piece of music:
 dur : Music → ℕ
 dur (𝅘𝅥 x d) = d
-dur (𝄽 d) = d
-dur (x ▹ y) = dur x + dur y
-dur (x ∣ y) = dur x ⊔ dur y
+dur (𝄽 d)   = d
+dur (x ▹ y) = dur x + dur y  -- The sum of the two durations
+dur (x ∣ y) = dur x ⊔ dur y  -- The max of the two durations
 
 
 -- The following axioms exist:
