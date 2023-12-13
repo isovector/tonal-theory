@@ -174,19 +174,19 @@ _▹→∣ₚ_ : ParSeq m → ParSeq n → ParSeq (m ▹→∣ n)
 m ▹→∣ₚ embed x = m ∣ embed (𝄽 ▹ x)
 m ▹→∣ₚ 𝅘𝅥 = m ∣ embed (𝄽 ▹ 𝅘𝅥)
 m ▹→∣ₚ 𝄽 = m ∣ embed (𝄽 ▹ 𝄽)
-_▹→∣ₚ_ {mm} m (_∣_ {x} {y} n₁ n₂) with m ▹→∣ₚ n₁ | m ▹→∣ₚ n₂
-... | a | b = subst ParSeq ( begin
-  let d = 𝄽 (dur mm) in
-  (mm ∣ d ▹ x) ∣ (mm ∣ d ▹ y)  ≡⟨ cong (_∣ (mm ∣ d ▹ y)) (∣-comm _ _) ⟩
-  (d ▹ x ∣ mm) ∣ (mm ∣ d ▹ y)  ≡⟨ ∣-assoc _ _ _ ⟩
-  d ▹ x ∣ (mm ∣ (mm ∣ d ▹ y))  ≡⟨ cong (d ▹ x ∣_) (sym (∣-assoc _ _ _)) ⟩
-  d ▹ x ∣ (mm ∣ mm) ∣ d ▹ y    ≡⟨ cong (λ φ → d ▹ x ∣ φ ∣ d ▹ y) (∣-idem _) ⟩
-  d ▹ x ∣ (mm ∣ d ▹ y)         ≡⟨ sym (∣-assoc _ _ _) ⟩
-  (d ▹ x ∣ mm) ∣ d ▹ y         ≡⟨ cong (_∣ d ▹ y) (∣-comm _ _) ⟩
-  (mm ∣ d ▹ x) ∣ d ▹ y         ≡⟨ ∣-assoc _ _ _ ⟩
-  mm ∣ (d ▹ x ∣ d ▹ y)         ≡⟨ cong (mm ∣_) (elim-head _ _ _) ⟩
-  mm ∣ d ▹ (x ∣ y)             ∎
-                           ) (a ∣ b)
+_▹→∣ₚ_ {mm} m (_∣_ {x} {y} n₁ n₂) = subst ParSeq
+  ( begin
+    let d = 𝄽 (dur mm) in
+    (mm ∣ d ▹ x) ∣ (mm ∣ d ▹ y)  ≡⟨ cong (_∣ (mm ∣ d ▹ y)) (∣-comm _ _) ⟩
+    (d ▹ x ∣ mm) ∣ (mm ∣ d ▹ y)  ≡⟨ ∣-assoc _ _ _ ⟩
+    d ▹ x ∣ (mm ∣ (mm ∣ d ▹ y))  ≡⟨ cong (d ▹ x ∣_) (sym (∣-assoc _ _ _)) ⟩
+    d ▹ x ∣ (mm ∣ mm) ∣ d ▹ y    ≡⟨ cong (λ φ → d ▹ x ∣ φ ∣ d ▹ y) (∣-idem _) ⟩
+    d ▹ x ∣ (mm ∣ d ▹ y)         ≡⟨ sym (∣-assoc _ _ _) ⟩
+    (d ▹ x ∣ mm) ∣ d ▹ y         ≡⟨ cong (_∣ d ▹ y) (∣-comm _ _) ⟩
+    (mm ∣ d ▹ x) ∣ d ▹ y         ≡⟨ ∣-assoc _ _ _ ⟩
+    mm ∣ (d ▹ x ∣ d ▹ y)         ≡⟨ cong (mm ∣_) (elim-head _ _ _) ⟩
+    mm ∣ d ▹ (x ∣ y)             ∎
+  ) (m ▹→∣ₚ n₁ ∣ m ▹→∣ₚ n₂)
   where open ≡-Reasoning
 
 -- Any piece of music can be encoded as a parallel sequence:
