@@ -117,7 +117,8 @@ elim-head a b c = begin
 delay-by : ℕ → Music → Music
 delay-by d = 𝄽 d ▹_
 
--- We can delay a second piece of music by the duration of the first:
+-- We can play one piece of music after another, by in parallel, delaying the
+-- second piece by the duration of the first.
 _▹→∣_ : Music → Music → Music
 m ▹→∣ n = m ∣ delay-by (dur m) n
 
