@@ -1,53 +1,56 @@
 module Duration where
 
-open import Data.Nat
-open import Data.Nat.Properties
-open import Relation.Binary using (Rel)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
-open import Data.Fin using (Fin; zero; suc; toℕ)
-open import Agda.Primitive
-open import Data.Product
+open import Data.Rational as Rat using (ℚ; 0ℚ; 1ℚ)
+import Data.Rational.Properties as Rat
+open import Data.Integer hiding (_+_; _*_; _≤_; positive; _⊔_)
+open import Data.Nat using (ℕ; zero; suc; z≤n; s≤s)
 
+record 𝔻 : Set where
+  constructor mkDur
+  field
+    duration : ℚ
+    positive : 0ℚ Rat.≤ duration
 
-data Duration : Set where
-  𝅝． 𝅝 𝅗𝅥． 𝅗𝅥 𝅘𝅥． 𝅘𝅥 𝅘𝅥𝅮． 𝅘𝅥𝅮 𝅘𝅥𝅯． 𝅘𝅥𝅯 𝅘𝅥𝅰． 𝅘𝅥𝅰 ⊘ : Duration
-  _⁀_ : Duration → Duration → Duration
+open import Data.Unit using (tt)
 
-infixl 5 _⁀_
+infix 4 _≤_
+infixr 5 _+_
+_+_ : 𝔻 → 𝔻 → 𝔻
+mkDur d₁ p₁ + mkDur d₂ p₂ = mkDur (d₁ Rat.+ d₂) (Rat.+-mono-≤ p₁ p₂)
 
-durationLength : Duration → ℕ
-durationLength 𝅝． = 96
-durationLength 𝅝   = 64
-durationLength 𝅗𝅥． = 48
-durationLength 𝅗𝅥   = 32
-durationLength 𝅘𝅥． = 24
-durationLength 𝅘𝅥   = 16
-durationLength 𝅘𝅥𝅮． = 12
-durationLength 𝅘𝅥𝅮   = 8
-durationLength 𝅘𝅥𝅯． = 6
-durationLength 𝅘𝅥𝅯   = 4
-durationLength 𝅘𝅥𝅰． = 3
-durationLength 𝅘𝅥𝅰   = 2
-durationLength ⊘   = 0
-durationLength (x ⁀ y) = durationLength x + durationLength y
+infixr 6 _⊔_ _*_
+_⊔_ : 𝔻 → 𝔻 → 𝔻
+mkDur d₁ p₁ ⊔ mkDur d₂ p₂ = mkDur (d₁ Rat.⊔ d₂) (Rat.⊔-mono-≤ p₁ p₂)
 
-_≈ᵈ_ : Rel Duration lzero
-x ≈ᵈ y = durationLength x ≡ durationLength y
+_*_ : 𝔻 → 𝔻 → 𝔻
+mkDur d₁ p₁ * mkDur d₂ p₂ = mkDur (d₁ Rat.* d₂) ( begin
+  0ℚ Rat.* 0ℚ  ≤⟨ Rat.*-monoʳ-≤-nonNeg 0ℚ tt p₁ ⟩
+  d₁ Rat.* 0ℚ  ≤⟨ Rat.*-monoˡ-≤-nonNeg d₁ (Rat.nonNegative p₁) p₂ ⟩
+  d₁ Rat.* d₂  ∎)
+  where open Rat.≤-Reasoning
 
-infix 4 _≈ᵈ_
+0𝔻 : 𝔻
+0𝔻 = mkDur 0ℚ Rat.≤-refl
 
-_+ᵈ_ : Duration → Duration → Duration
-⊘   +ᵈ y = y
-x   +ᵈ y = x ⁀ y
+1𝔻 : 𝔻
+1𝔻 = mkDur 1ℚ (Rat._≤_.*≤* (+≤+ z≤n))
 
-_measures : ℕ → Duration
-zero measures = ⊘
-suc x measures = x measures +ᵈ 𝅝
+fromℕ : ℕ → 𝔻
+fromℕ zero = 0𝔻
+fromℕ (ℕ.suc x) = 1𝔻 + fromℕ x
 
-_*ᵈ_ : Duration → ℕ → Duration
-d *ᵈ zero = ⊘
-d *ᵈ suc y = d *ᵈ y +ᵈ d
+_⁻¹ : 𝔻 → 𝔻
+mkDur (Rat.mkℚ (+ zero) d isCoprime) p ⁻¹ = 0𝔻
+mkDur r@(Rat.mkℚ +[1+ n ] d isCoprime) p ⁻¹ = mkDur (Rat.1/ r) (Rat._≤_.*≤* (+≤+ z≤n))
+mkDur (Rat.mkℚ (-[1+_] n) d isCoprime) (Rat._≤_.*≤* ()) ⁻¹
 
-infixl 5 _+ᵈ_
-infixl 6 _*ᵈ_
+abstract
+  _≤_ : 𝔻 → 𝔻 → Set
+  x ≤ y = 𝔻.duration x Rat.≤ 𝔻.duration y
+
+  ≤-refl : {x : 𝔻} → x ≤ x
+  ≤-refl = Rat.≤-refl
+
+  0𝔻≤n : {x : 𝔻} → 0𝔻 ≤ x
+  0𝔻≤n {mkDur duration positive} = positive
 
