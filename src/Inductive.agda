@@ -1,6 +1,6 @@
 module Inductive where
 
-open import Data.Nat renaming (ℕ to Pitch) using ()
+open import Data.Nat using ()
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Duration
 
