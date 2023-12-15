@@ -1,6 +1,6 @@
 module Inductive where
 
-open import Data.Nat  using ()
+open import Data.Nat using ()
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Duration
 
@@ -98,6 +98,8 @@ postulate
   ∣-comm  : (m n : Music A)
           → m ∣ n ≡ n ∣ m
 
+-- Yanze: I don't understand this axiom
+-- I feel there are some property missing from the current encodeing, volume?
   -- Parallel is idempotent
   ∣-idem  : (m : Music A)
           → m ∣ m ≡ m
