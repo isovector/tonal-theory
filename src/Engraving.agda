@@ -3,7 +3,6 @@ module Engraving where
 open import Data.Nat using (zero; suc)
 open import Data.Product hiding (map)
 open import Pitch
-open import Duration
 open import Data.String
   hiding (intersperse)
 open import Data.List
@@ -11,7 +10,7 @@ open import Data.List
   hiding (replicate; [_])
 open import Data.Sum hiding (map)
 open import Data.Rational.Show renaming (show to showRat)
-open import Inductive
+open import Musikal.Base
 
 engraveDuration : 𝔻 → String
 engraveDuration (mkDur d _) = showRat d
