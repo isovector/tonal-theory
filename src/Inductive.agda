@@ -1,6 +1,7 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module Inductive where
 
-open import Data.Nat renaming (ℕ to Pitch) using ()
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Duration
 
@@ -55,25 +56,66 @@ scale d′ (m ▹ n) = scale d′ m ▹ scale d′ n
 scale d′ (m ∣ n) = scale d′ m ∣ scale d′ n
 
 join : Music (Music A) → Music A
-join (𝅘𝅥 ma d) = scale d ma
+join (𝅘𝅥 ma d) = scale (d * (dur ma ⁻¹)) ma
 join (𝄽 d) = 𝄽 d
 join (m ▹ n) = join m ▹ join n
 join (m ∣ n) = join m ∣ join n
 
 pure : A → Music A
 pure a = 𝅘𝅥 a 1𝔻
+-- spiritually a monad, if we rescale everything down to 0,1 every time.
+-- I think. I hope.
+
+_>>=_ : Music A → (A → Music B) → Music B
+m >>= f = join (map f m)
+
+_>>_ : Music A → Music B → Music B
+a >> b = a >>= λ _ → b
 
 open import Function using (id; _∘_)
 
 postulate
   map-id : (m : Music A) → map id m ≡ m
-  map-∘  : {A B C : Set} (m : Music A) → (g : B → C) → (f : A → B) → map (g ∘ f) m ≡ map g (map f m)
+  map-∘  : {A B C : Set} (m : Music A)
+         → (g : B → C)
+         → (f : A → B)
+         → map (g ∘ f) m ≡ map g (map f m)
 
--- join∘pure : (m : Music A) → join (pure m) ≡ m
--- join∘pure (𝅘𝅥 p d) = cong (𝅘𝅥 p) (*-identityʳ d)
--- join∘pure (𝄽 d)   = cong 𝄽 (*-identityʳ d)
--- join∘pure (m ▹ n) rewrite join∘pure m rewrite join∘pure n = refl
--- join∘pure (m ∣ n) rewrite join∘pure m rewrite join∘pure n = refl
+join∘pure : (m : Music A) → join (pure m) ≡ m
+join∘pure (𝅘𝅥 p d) = cong (𝅘𝅥 p) ?
+join∘pure (𝄽 d)   = cong 𝄽 ?
+join∘pure (m ▹ n) = ?
+join∘pure (m ∣ n) = ?
+
+
+-- scale∘scale : ∀ d d′ (m : Music A) → scale ((d * (d′ ⁻¹)) ⁻¹) m ≡ scale (d′ ⁻¹) (scale (d ⁻¹) m)
+-- scale∘scale d d′ (𝅘𝅥 x x₁) = {! !}
+-- scale∘scale d d′ (𝄽 x) = cong 𝄽 (
+--   begin
+--     x * ((d * (d′ ⁻¹)) ⁻¹)
+--   ≡⟨ ? ⟩
+--     x * ((d ⁻¹ * (d′ ⁻¹) ⁻¹))
+--   ≡⟨ ? ⟩
+--     x * (d ⁻¹ * d′)
+--   ≡⟨ ? ⟩
+--     (x * (d ⁻¹)) * (d′ ⁻¹)
+--   ∎
+--   )
+--   where open ≡-Reasoning
+-- scale∘scale d d′ (m ▹ m₁) = {! !}
+-- scale∘scale d d′ (m ∣ m₁) = {! !}
+
+-- join∘scale : (d : 𝔻) (ma : Music (Music A)) → join (scale (d ⁻¹) ma) ≡ scale (d ⁻¹) (join ma)
+-- join∘scale d′ (𝅘𝅥 m d) = scale∘scale d d′ m
+-- join∘scale d′ (𝄽 d) = refl
+-- join∘scale d′ (m ▹ n) rewrite join∘scale d′ m rewrite join∘scale d′ n = refl
+-- join∘scale d′ (m ∣ n) rewrite join∘scale d′ m rewrite join∘scale d′ n = refl
+
+join∘join : (m : Music (Music (Music A))) → join (join m) ≡ join (map join m)
+join∘join (𝅘𝅥 ma d) = ?
+join∘join (𝄽 x) = refl
+join∘join (m ▹ n) rewrite join∘join m rewrite join∘join n = refl
+join∘join (m ∣ n) rewrite join∘join m rewrite join∘join n = refl
 
 
 
@@ -148,13 +190,13 @@ elim-head a b c = begin
 ----
 
 -- We can delay any piece of music by prepending a rest to it:
-delay-by : 𝔻 → Music A → Music A
-delay-by d = 𝄽 d ▹_
+delay : 𝔻 → Music A → Music A
+delay d = 𝄽 d ▹_
 
 -- We can play one piece of music after another, by in parallel, delaying the
 -- second piece by the duration of the first.
 _▹→∣_ : Music A → Music A → Music A
-m ▹→∣ n = m ∣ delay-by (dur m) n
+m ▹→∣ n = m ∣ delay (dur m) n
 
 infixr 6 _▹→∣_
 
@@ -234,13 +276,81 @@ asLines (m ∣ n) = asLines m ∣ asLines n
 open import Relation.Nullary
 open import Data.Unit
 
-2𝔻 = 1𝔻 + 1𝔻
-
 -- However, not all music can be encoded as sequential parallel notes:
 ¬asChords : ¬ ((A : Set) → (m : Music A) → SeqPar A m)
 ¬asChords f with f ⊤ (𝅘𝅥 tt 1𝔻 ▹ 𝅘𝅥 tt 2𝔻 ∣ 𝅘𝅥 tt 2𝔻 ▹ 𝅘𝅥 tt 1𝔻)
 ... | embed (embed () ∣ _)
 
+
+
+open import Pitch hiding (A)
+open import Interval using (Quality) renaming (Interval to Int)
+open Int
+open Quality
+
+open import Data.List using (List; []; _∷_; foldr)
+
+triad : Quality → List (Music Int)
+triad minor = 𝅘𝅥 p1 1𝔻 ∷ 𝅘𝅥 M3 1𝔻 ∷ 𝅘𝅥 p5 1𝔻 ∷ []
+triad major = 𝅘𝅥 p1 1𝔻 ∷ 𝅘𝅥 m3 1𝔻 ∷ 𝅘𝅥 p5 1𝔻 ∷ []
+triad perfect = 𝅘𝅥 p1 1𝔻 ∷ 𝅘𝅥 M3 1𝔻 ∷ 𝅘𝅥 p5 1𝔻 ∷ 𝅘𝅥 p8 1𝔻 ∷ []
+
+par : Music A → Music A → Music A
+par (𝄽 _) y = y
+par x (𝄽 _) = x
+par x y = x ∣ y
+
+chord : List (Music A) → Music A
+chord = foldr par ⊘
+
+arpeggiate : List (Music A) → Music A
+arpeggiate = foldr _▹_ ⊘
+
+transpose : Int → Music Pitch → Music Pitch
+transpose i = map (i aboveᵖ_)
+
+𝄆_𝄇 : Music A → Music A
+𝄆 m 𝄇 = m ▹ m
+
+
+etude17 : Music Pitch
+etude17 = (rep ∣ hirep) ▹ transpose p8 (rep ∣ hirep)
+  where
+    rep = map (_aboveᵖ toNote E 2) 𝄆 𝄆 chord (triad minor) ▹ chord (triad major) 𝄇 𝄇
+    hirep = delay (1𝔻 / 2𝔻) (transpose p8 rep)
+
+4:4-beat : Music ⊤
+4:4-beat = 𝄆 𝄆 𝅘𝅥 tt (1𝔻 / 4𝔻) 𝄇 𝄇
+
+sec6 : Music Pitch
+sec6 = lhs ∣ rhs
+  where
+    lhs = do
+      4:4-beat
+      map (_aboveᵖ toNote A♭ 2) (chord (Data.List.take 2 (triad major))) ▹ 𝅘𝅥 (toNote F 2) 1𝔻
+
+    rhs = do
+      4:4-beat
+      i <- arpeggiate (triad perfect)
+      pure (i aboveᵖ toNote F 4)
+
+
+-- test : sec6 ≡ (( 𝅘𝅥 (semitones 47) _
+--                ∣ 𝅘𝅥 (semitones 51) _
+--                ∣ 𝅘𝅥 (semitones 54) _
+--                ∣ 𝅘𝅥 (semitones 59) _
+--                ∣ 𝄽 _
+--                )
+--              ▹ ( 𝅘𝅥 (semitones 47) _
+--                ∣ 𝅘𝅥 (semitones 51) _
+--                ∣ 𝅘𝅥 (semitones 54) _
+--                ∣ 𝅘𝅥 (semitones 59) _
+--                ∣ 𝄽 _)
+--                )
+--              ▹ (𝅘𝅥 (semitones 47) _ ∣ 𝅘𝅥 (semitones 51) _ ∣ 𝅘𝅥 (semitones 54) _ ∣ 𝅘𝅥 (semitones 59) _ ∣ 𝄽 _)
+--              ▹ (𝅘𝅥 (semitones 47) _ ∣ 𝅘𝅥 (semitones 51) _ ∣ 𝅘𝅥 (semitones 54) _ ∣ 𝅘𝅥 (semitones 59) _ ∣ 𝄽 _)
+--              ∣ ((𝅘𝅥 (semitones 56) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 60) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 63) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 68) _ ∣ 𝄽 _ ▹ 𝄽 _)))) ▹ (𝅘𝅥 (semitones 56) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 60) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 63) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 68) _ ∣ 𝄽 _ ▹ 𝄽 _))))) ▹ (𝅘𝅥 (semitones 56) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 60) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 63) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 68) _ ∣ 𝄽 _ ▹ 𝄽 _)))) ▹ (𝅘𝅥 (semitones 56) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 60) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 63) _ ∣ 𝄽 _ ▹ (𝅘𝅥 (semitones 68) _ ∣ 𝄽 _ ▹ 𝄽 _))))
+-- test = refl
 
 -- Therefore, we are justified in decomposing music into counterpoint, but NOT
 -- into sequences of chords.

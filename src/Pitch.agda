@@ -25,32 +25,32 @@ F♭ = E
 G♭ = F♯
 
 fromPitchClass : PitchClass → Fin 12
-fromPitchClass A  = zero
-fromPitchClass A♯ = suc zero
-fromPitchClass B  = suc (suc zero)
-fromPitchClass C  = suc (suc (suc zero))
-fromPitchClass C♯ = suc (suc (suc (suc zero)))
-fromPitchClass D  = suc (suc (suc (suc (suc zero))))
-fromPitchClass D♯ = suc (suc (suc (suc (suc (suc zero)))))
-fromPitchClass E  = suc (suc (suc (suc (suc (suc (suc zero))))))
-fromPitchClass F  = suc (suc (suc (suc (suc (suc (suc (suc zero)))))))
-fromPitchClass F♯ = suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))
-fromPitchClass G  = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))
-fromPitchClass G♯ = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))
+fromPitchClass C  = zero
+fromPitchClass C♯ = suc zero
+fromPitchClass D  = suc (suc zero)
+fromPitchClass D♯  = suc (suc (suc zero))
+fromPitchClass E = suc (suc (suc (suc zero)))
+fromPitchClass F  = suc (suc (suc (suc (suc zero))))
+fromPitchClass F♯ = suc (suc (suc (suc (suc (suc zero)))))
+fromPitchClass G  = suc (suc (suc (suc (suc (suc (suc zero))))))
+fromPitchClass G♯  = suc (suc (suc (suc (suc (suc (suc (suc zero)))))))
+fromPitchClass A = suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))
+fromPitchClass A♯  = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))
+fromPitchClass B = suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))
 
 toPitchClass : Fin 12 → PitchClass
-toPitchClass zero = A
-toPitchClass (suc zero) = A♯
-toPitchClass (suc (suc zero)) = B
-toPitchClass (suc (suc (suc zero))) = C
-toPitchClass (suc (suc (suc (suc zero)))) = C♯
-toPitchClass (suc (suc (suc (suc (suc zero))))) = D
-toPitchClass (suc (suc (suc (suc (suc (suc zero)))))) = D♯
-toPitchClass (suc (suc (suc (suc (suc (suc (suc zero))))))) = E
-toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = F
-toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = F♯
-toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = G
-toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = G♯
+toPitchClass zero = C
+toPitchClass (suc zero) = C♯
+toPitchClass (suc (suc zero)) = D
+toPitchClass (suc (suc (suc zero))) = D♯
+toPitchClass (suc (suc (suc (suc zero)))) = E
+toPitchClass (suc (suc (suc (suc (suc zero))))) = F
+toPitchClass (suc (suc (suc (suc (suc (suc zero)))))) = F♯
+toPitchClass (suc (suc (suc (suc (suc (suc (suc zero))))))) = G
+toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = G♯
+toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = A
+toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = A♯
+toPitchClass (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = B
 
 
 
