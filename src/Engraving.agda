@@ -11,6 +11,7 @@ open import Data.List
 open import Data.Sum hiding (map)
 open import Data.Rational.Show renaming (show to showRat)
 open import Musikal.Base
+open import Musikal.Domain
 
 engraveDuration : 𝔻 → String
 engraveDuration (mkDur d _) = showRat d
@@ -77,7 +78,7 @@ engravePitch n with fromNote n
 engraveMusic : Music Pitch → String
 engraveMusic (𝄽 d) = "r" ++ engraveDuration d
 engraveMusic (𝅘𝅥 x d) = engravePitch x ++ engraveDuration d
-engraveMusic (x ∣ y) = "<< { " ++ engraveMusic x ++ " } \\\\ { " ++ engraveMusic y ++ " } >>"
+engraveMusic (x ∣ y) = "\\partCombine { " ++ engraveMusic x ++ " } { " ++ engraveMusic y ++ " }"
 engraveMusic (x ▹ y) = engraveMusic x ++ " " ++ engraveMusic y
 
 preamble : String

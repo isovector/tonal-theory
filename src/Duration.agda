@@ -2,7 +2,7 @@ module Duration where
 
 open import Data.Rational as Rat using (ℚ; 0ℚ; 1ℚ)
 import Data.Rational.Properties as Rat
-open import Data.Integer hiding (_+_; _*_; _≤_; positive; _⊔_)
+open import Data.Integer using (+≤+; +_; +[1+_]; -[1+_])
 open import Data.Nat using (ℕ; zero; suc; z≤n; s≤s)
 open import Relation.Binary.PropositionalEquality
 
@@ -20,9 +20,13 @@ opaque
   _+_ : 𝔻 → 𝔻 → 𝔻
   mkDur d₁ p₁ + mkDur d₂ p₂ = mkDur (d₁ Rat.+ d₂) (Rat.+-mono-≤ p₁ p₂)
 
-  infixr 6 _⊔_ _*_
+  infixr 6 _⊔_ _⊓_ _*_
+
   _⊔_ : 𝔻 → 𝔻 → 𝔻
   mkDur d₁ p₁ ⊔ mkDur d₂ p₂ = mkDur (d₁ Rat.⊔ d₂) (Rat.⊔-mono-≤ p₁ p₂)
+
+  _⊓_ : 𝔻 → 𝔻 → 𝔻
+  mkDur d₁ p₁ ⊓ mkDur d₂ p₂ = mkDur (d₁ Rat.⊓ d₂) (Rat.⊓-mono-≤ p₁ p₂)
 
   _*_ : 𝔻 → 𝔻 → 𝔻
   mkDur d₁ p₁ * mkDur d₂ p₂ = mkDur (d₁ Rat.* d₂) ( begin
@@ -61,11 +65,46 @@ opaque
   _≤_ : 𝔻 → 𝔻 → Set
   x ≤ y = 𝔻.duration x Rat.≤ 𝔻.duration y
 
+  _<_ : 𝔻 → 𝔻 → Set
+  x < y = 𝔻.duration x Rat.< 𝔻.duration y
+
   ≤-refl : {x : 𝔻} → x ≤ x
   ≤-refl = Rat.≤-refl
 
   0𝔻≤n : {x : 𝔻} → 0𝔻 ≤ x
   0𝔻≤n {mkDur duration positive} = positive
+
+  sub : (x y : 𝔻) → y ≤ x → 𝔻
+  sub (mkDur x px) (mkDur y py) y≤x = mkDur (x Rat.- y)
+    ( begin
+    0ℚ                 ≡⟨ sym (Rat.+-inverseʳ x) ⟩
+    x Rat.+ (Rat.- x)  ≤⟨ Rat.+-monoʳ-≤ x (Rat.neg-antimono-≤ y≤x) ⟩
+    x Rat.+ (Rat.- y)  ∎
+    )
+    where open Rat.≤-Reasoning
+
+  x⊓y≤x⊔y : (x y : 𝔻) → x ⊓ y ≤ x ⊔ y
+  x⊓y≤x⊔y x y = Rat.p⊓q≤p⊔q (𝔻.duration x) (𝔻.duration y)
+
+  open import Relation.Nullary
+
+  _≟_ : (x y : 𝔻) → Dec (x ≡ y)
+  x ≟ y with 𝔻.duration x Rat.≟ 𝔻.duration y
+  (mkDur .duration p ≟ mkDur duration p₁) | yes refl rewrite Rat.≤-irrelevant p p₁ = yes refl
+  ... | no z = no λ { x₁ → z (cong 𝔻.duration x₁) }
+
+  _≤?_ : (x y : 𝔻) → Dec (x ≤ y)
+  x ≤? y = 𝔻.duration x Rat.≤? 𝔻.duration y
+
+  open import Relation.Binary.Definitions using (Trichotomous; tri<; tri≈; tri>) public
+
+  postulate
+    <-cmp : Trichotomous _≡_ _<_
+  -- <-cmp x y with Rat.<-cmp (𝔻.duration x) (𝔻.duration y)
+  -- ... | tri< a ¬b ¬c = tri< {! !} ? ?
+  -- ... | tri≈ ¬a b ¬c = tri≈ {! !} ? ?
+  -- ... | tri> ¬a ¬b c = tri> {! !} ? ?
+
 
 
 2𝔻 = 1𝔻 + 1𝔻

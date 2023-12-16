@@ -5,7 +5,7 @@ open import Data.Nat.DivMod
 open import Relation.Binary using (Rel)
 open import Agda.Primitive
 open import Relation.Nullary using (Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≢_; refl)
+open import Relation.Binary.PropositionalEquality using (_≢_; refl; cong)
 
 private variable
   -- p p₁ p₂ p₃ : Pitch
@@ -16,20 +16,12 @@ data IntervalCategory : Set where
   step       : IntervalCategory
   skip       : IntervalCategory
 
--- data IsIntervalCategory : Pitch → Pitch → IntervalCategory → Set where
---   repetition : IsIntervalCategory p p repetition
---   step↑m     : IsIntervalCategory p (p +ᵖ 1) step
---   step↑M     : IsIntervalCategory p (p +ᵖ 2) step
---   step↓m     : IsIntervalCategory (p +ᵖ 1) p step
---   step↓M     : IsIntervalCategory (p +ᵖ 2) p step
---   skip↑      : IsIntervalCategory p (p +ᵖ suc (suc (suc n))) skip
---   skip↓      : IsIntervalCategory (p +ᵖ suc (suc (suc n))) p skip
-
 data IntervalName : Set where
   unison second third fourth fifth sixth seventh octave : IntervalName
 
 data Interval : Set where
-  p1 m2 M2 m3 M3 p4 tritone p5 m6 M6 m7 M7 p8 : Interval
+  p1 m2 M2 m3 M3 p4 tritone p5 m6 M6 m7 M7 : Interval
+  8va : Interval → Interval
 
 data DiatonicInterval : Interval → Set where
   p1 : DiatonicInterval p1
@@ -39,7 +31,9 @@ data DiatonicInterval : Interval → Set where
   p5 : DiatonicInterval p5
   M6 : DiatonicInterval M6
   M7 : DiatonicInterval M7
-  p8 : DiatonicInterval p8
+  8va : ∀ {i} → DiatonicInterval i → DiatonicInterval (8va i)
+
+pattern p8 = 8va p1
 
 DiatonicInterval? : (i : Interval) → Dec (DiatonicInterval i)
 DiatonicInterval? p1 = yes p1
@@ -55,6 +49,9 @@ DiatonicInterval? M6 = yes M6
 DiatonicInterval? m7 = no λ ()
 DiatonicInterval? M7 = yes M7
 DiatonicInterval? p8 = yes p8
+DiatonicInterval? (8va i) with DiatonicInterval? i
+... | yes z = yes (8va z)
+... | no z = no λ { (8va x) → z x }
 
 
 data Quality : Set where
@@ -91,76 +88,77 @@ data IntervalSize : Interval → IntervalName → Set where
 open import Data.Fin hiding (_+_)
 
 
-intervalSemitones : Interval → Fin 13
-intervalSemitones p1 = fromℕ< {m = 0 } (s≤s z≤n)
-intervalSemitones m2 = fromℕ< {m = 1 } (s≤s (s≤s z≤n))
-intervalSemitones M2 = fromℕ< {m = 2 } (s≤s (s≤s (s≤s z≤n)))
-intervalSemitones m3 = fromℕ< {m = 3 } (s≤s (s≤s (s≤s (s≤s z≤n))))
-intervalSemitones M3 = fromℕ< {m = 4 } (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))
-intervalSemitones p4 = fromℕ< {m = 5 } (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))
-intervalSemitones tritone = fromℕ< {m = 6} (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))
-intervalSemitones p5 = fromℕ< {m = 7 } (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))
-intervalSemitones m6 = fromℕ< {m = 8 } (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))
-intervalSemitones M6 = fromℕ< {m = 9 } (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))
-intervalSemitones m7 = fromℕ< {m = 10} (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))
-intervalSemitones M7 = fromℕ< {m = 11} (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))
-intervalSemitones p8 = fromℕ< {m = 12} (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n)))))))))))))
+intervalSemitones : Interval → ℕ
+intervalSemitones p1 = 0
+intervalSemitones m2 = 1
+intervalSemitones M2 = 2
+intervalSemitones m3 = 3
+intervalSemitones M3 = 4
+intervalSemitones p4 = 5
+intervalSemitones tritone = 6
+intervalSemitones p5 = 7
+intervalSemitones m6 = 8
+intervalSemitones M6 = 9
+intervalSemitones m7 = 10
+intervalSemitones M7 = 11
+intervalSemitones p8 = 12
+intervalSemitones (8va i) = 12 + intervalSemitones i
 
-fromIntervalSemitones : Fin 13 → Interval
-fromIntervalSemitones zero = p1
-fromIntervalSemitones (suc zero) = m2
-fromIntervalSemitones (suc (suc zero)) = M2
-fromIntervalSemitones (suc (suc (suc zero))) = m3
-fromIntervalSemitones (suc (suc (suc (suc zero)))) = M3
-fromIntervalSemitones (suc (suc (suc (suc (suc zero))))) = p4
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc zero)))))) = tritone
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc zero))))))) = p5
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = m6
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = M6
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = m7
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = M7
-fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))))) = p8
+-- fromIntervalSemitones : Fin 13 → Interval
+-- fromIntervalSemitones zero = p1
+-- fromIntervalSemitones (suc zero) = m2
+-- fromIntervalSemitones (suc (suc zero)) = M2
+-- fromIntervalSemitones (suc (suc (suc zero))) = m3
+-- fromIntervalSemitones (suc (suc (suc (suc zero)))) = M3
+-- fromIntervalSemitones (suc (suc (suc (suc (suc zero))))) = p4
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc zero)))))) = tritone
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc zero))))))) = p5
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = m6
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = M6
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = m7
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = M7
+-- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))))) = p8
 
-fromIntervalSemitones≢p8 : ∀ {n} → fromIntervalSemitones (inject₁ n) ≢ p8
-fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))} ()
-fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc ())))))))))))} x
+-- fromIntervalSemitones≢p8 : ∀ {n} → fromIntervalSemitones (inject₁ n) ≢ p8
+-- fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))} ()
+-- fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc ())))))))))))} x
 
-data ExtendedInterval : Set where
-  ↪    : (i : Interval) → i ≢ p8 → ExtendedInterval
-  8va+ : ExtendedInterval → ExtendedInterval
+-- data ExtendedInterval : Set where
+--   ↪    : (i : Interval) → i ≢ p8 → ExtendedInterval
+--   8va+ : ExtendedInterval → ExtendedInterval
 
-extendedIntervalSemitones : ExtendedInterval → ℕ
-extendedIntervalSemitones (↪ x _)  = toℕ (intervalSemitones x)
-extendedIntervalSemitones (8va+ x) = 12 + extendedIntervalSemitones x
+-- extendedIntervalSemitones : ExtendedInterval → ℕ
+-- extendedIntervalSemitones (↪ x _)  = toℕ (intervalSemitones x)
+-- extendedIntervalSemitones (8va+ x) = 12 + extendedIntervalSemitones x
 
-unextendedInterval : ExtendedInterval → Interval
-unextendedInterval (↪ i x) = i
-unextendedInterval (8va+ (↪ p1 x)) = p8
-unextendedInterval (8va+ (↪ i x))  = i
-unextendedInterval (8va+ (8va+ x)) = unextendedInterval (8va+ x)
+-- unextendedInterval : ExtendedInterval → Interval
+-- unextendedInterval (↪ i x) = i
+-- unextendedInterval (8va+ (↪ p1 x)) = p8
+-- unextendedInterval (8va+ (↪ i x))  = i
+-- unextendedInterval (8va+ (8va+ x)) = unextendedInterval (8va+ x)
 
-extendInterval : Interval → ExtendedInterval
-extendInterval p1 = ↪ p1 λ ()
-extendInterval m2 = ↪ m2 λ ()
-extendInterval M2 = ↪ M2 λ ()
-extendInterval m3 = ↪ m3 λ ()
-extendInterval M3 = ↪ M3 λ ()
-extendInterval p4 = ↪ p4 λ ()
-extendInterval tritone = ↪ tritone λ ()
-extendInterval p5 = ↪ p5 λ ()
-extendInterval m6 = ↪ m6 λ ()
-extendInterval M6 = ↪ M6 λ ()
-extendInterval m7 = ↪ m7 λ ()
-extendInterval M7 = ↪ M7 λ ()
-extendInterval p8 = 8va+ (↪ p1 λ ())
+-- extendInterval : Interval → ExtendedInterval
+-- extendInterval p1 = ↪ p1 λ ()
+-- extendInterval m2 = ↪ m2 λ ()
+-- extendInterval M2 = ↪ M2 λ ()
+-- extendInterval m3 = ↪ m3 λ ()
+-- extendInterval M3 = ↪ M3 λ ()
+-- extendInterval p4 = ↪ p4 λ ()
+-- extendInterval tritone = ↪ tritone λ ()
+-- extendInterval p5 = ↪ p5 λ ()
+-- extendInterval m6 = ↪ m6 λ ()
+-- extendInterval M6 = ↪ M6 λ ()
+-- extendInterval m7 = ↪ m7 λ ()
+-- extendInterval M7 = ↪ M7 λ ()
+-- extendInterval p8 = 8va+ (↪ p1 λ ())
 
-8vas+ : ℕ → Interval → ExtendedInterval
-8vas+ zero i = extendInterval i
-8vas+ (suc o) i = 8vas+ o i
+-- 8vas+ : ℕ → Interval → ExtendedInterval
+-- 8vas+ zero i = extendInterval i
+-- 8vas+ (suc o) i = 8vas+ o i
 
-toExtendedInterval : ℕ → ExtendedInterval
-toExtendedInterval n with n divMod 12
-... | result octs remainder _ = 8vas+ octs (fromIntervalSemitones (inject₁ remainder))
+-- toExtendedInterval : ℕ → ExtendedInterval
+-- toExtendedInterval n with n divMod 12
+-- ... | result octs remainder _ = 8vas+ octs (fromIntervalSemitones (inject₁ remainder))
 
 data ConsonantInterval : Interval → Set where
   p1 : ConsonantInterval p1
@@ -170,7 +168,7 @@ data ConsonantInterval : Interval → Set where
   p5 : ConsonantInterval p5
   m6 : ConsonantInterval m6
   M6 : ConsonantInterval M6
-  p8 : ConsonantInterval p8
+  octave : ConsonantInterval p8
 
 -- data Adjacency : Rel IntervalName lzero where
 --   sym  : ∀ {i j} → Adjacency i j → Adjacency j i

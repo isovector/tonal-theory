@@ -196,4 +196,3 @@ m ▹→∣ n = m ∣ delay (dur m) n
 
 infixr 6 _▹→∣_
 
-

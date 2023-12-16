@@ -1,23 +1,27 @@
 module Musikal.Domain where
 
 open import Musikal.Base
-open import Interval using (Quality) renaming (Interval to Int)
+open import Interval using (Quality; p8) renaming (Interval to Int)
 open Int
 open import Pitch
 open Quality
-open import Data.Unit
+open import Data.Unit using (⊤; tt)
 open import Data.Product hiding (map)
+open import Relation.Nullary
 
 private variable
   𝔸 : Set
 
-open import Data.List using (List; []; _∷_; foldr)
+open import Data.List using (List; []; _∷_; foldr; _∷ʳ_)
 
 data Strength : Set where
   strong medium weak : Strength
 
 data Beat : Set where
   down up back 3rd : Beat
+
+data SATB : Set where
+  soprano alto tenor bass : SATB
 
 triad : Quality → List (Music Int)
 triad minor = 𝅘𝅥 p1 1𝔻 ∷ 𝅘𝅥 M3 1𝔻 ∷ 𝅘𝅥 p5 1𝔻 ∷ []
@@ -28,6 +32,15 @@ par : Music 𝔸 → Music 𝔸 → Music 𝔸
 par (𝄽 _) y = y
 par x (𝄽 _) = x
 par x y = x ∣ y
+
+seq : Music 𝔸 → Music 𝔸 → Music 𝔸
+seq l@(𝄽 x) y with x ≟ 0𝔻 
+... | yes _ = y
+... | no _ = l ▹ y
+seq x r@(𝄽 y) with y ≟ 0𝔻 
+... | yes _ = x
+... | no _ = x ▹ r
+seq x y = x ▹ y
 
 chord : List (Music 𝔸) → Music 𝔸
 chord = foldr par ⊘
@@ -40,6 +53,10 @@ transpose i = map (i aboveᵖ_)
 
 𝄆_𝄇 : Music 𝔸 → Music 𝔸
 𝄆 m 𝄇 = m ▹ m
+
+invertⁱ : List (Music Int) → List (Music Int)
+invertⁱ [] = []
+invertⁱ (i ∷ is) = is ∷ʳ map 8va i
 
 
 etude17 : Music Pitch

@@ -93,6 +93,7 @@ lines : Music A → List (Music A)
 lines m = linesFromParSeq (asLines m)
 
 
+
 open import Relation.Nullary
 open import Data.Unit
 

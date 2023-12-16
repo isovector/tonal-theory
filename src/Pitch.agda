@@ -95,23 +95,19 @@ _+ᵖ_ : Pitch → ℕ → Pitch
 semitones x +ᵖ y = semitones (x + y)
 
 _aboveᵖ_ : Interval → Pitch → Pitch
-i aboveᵖ p = p +ᵖ toℕ (intervalSemitones i)
-
-_aboveˣᵖ_ : ExtendedInterval → Pitch → Pitch
-↪ i x aboveˣᵖ p = i aboveᵖ p
-8va+ i aboveˣᵖ p = p8 aboveᵖ (i aboveˣᵖ p)
+i aboveᵖ p = p +ᵖ intervalSemitones i
 
 infixl 5 _+ᵖ_
 
 open import Function using (_∘_)
 
-_aboveᶜ_ : Interval → PitchClass → PitchClass
-_aboveᶜ_ i
-  = toPitchClass
-  ∘ proj₂
-  ∘ remQuot {2} 12
-  ∘ intervalSemitones i +ᶠ_
-  ∘ fromPitchClass
+-- _aboveᶜ_ : Interval → PitchClass → PitchClass
+-- _aboveᶜ_ i
+--   = toPitchClass
+--   ∘ proj₂
+--   ∘ remQuot {2} 12
+--   ∘ intervalSemitones i +ᶠ_
+--   ∘ fromPitchClass
 
 pitchClass : Pitch → PitchClass
 pitchClass (semitones n) = toPitchClass (fromℕ< (m%n<n n _))
@@ -125,18 +121,18 @@ semitones x ≤ᵖ semitones y = x ≤ y
 _≤ᵖ?_ : Decidable _≤ᵖ_
 semitones x ≤ᵖ? semitones y = x ≤? y
 
-record InDiatonicCollection (pc tonic : PitchClass) : Set where
-  constructor ∈-diatonic
-  field
-    {interval} : Interval
-    is-diatonic : DiatonicInterval interval
-    in-collection : interval aboveᶜ tonic ≡ pc
+-- record InDiatonicCollection (pc tonic : PitchClass) : Set where
+--   constructor ∈-diatonic
+--   field
+--     {interval} : Interval
+--     is-diatonic : DiatonicInterval interval
+--     in-collection : interval aboveᶜ tonic ≡ pc
 
 
--- WRONG; why? doesn't use the fact that the tonic is a pitch, not a pitch
--- class
-SameDiatonicCollection : Rel Pitch lzero
-SameDiatonicCollection p₁ p₂ =
-  ∃[ t ] InDiatonicCollection (pitchClass p₁) (pitchClass t)
-       × InDiatonicCollection (pitchClass p₂) (pitchClass t)
+-- -- WRONG; why? doesn't use the fact that the tonic is a pitch, not a pitch
+-- -- class
+-- SameDiatonicCollection : Rel Pitch lzero
+-- SameDiatonicCollection p₁ p₂ =
+--   ∃[ t ] InDiatonicCollection (pitchClass p₁) (pitchClass t)
+--        × InDiatonicCollection (pitchClass p₂) (pitchClass t)
 
