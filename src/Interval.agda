@@ -6,6 +6,7 @@ open import Relation.Binary using (Rel)
 open import Agda.Primitive
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≢_; refl; cong)
+open import Musikal.Classes
 
 private variable
   -- p p₁ p₂ p₃ : Pitch
@@ -48,7 +49,6 @@ DiatonicInterval? m6 = no λ ()
 DiatonicInterval? M6 = yes M6
 DiatonicInterval? m7 = no λ ()
 DiatonicInterval? M7 = yes M7
-DiatonicInterval? p8 = yes p8
 DiatonicInterval? (8va i) with DiatonicInterval? i
 ... | yes z = yes (8va z)
 ... | no z = no λ { (8va x) → z x }
@@ -85,7 +85,7 @@ data IntervalSize : Interval → IntervalName → Set where
   M7n : IntervalSize M7 seventh
   p8n : IntervalSize p8 octave
 
-open import Data.Fin hiding (_+_)
+open import Data.Fin hiding (_+_; _≤_; _≤?_)
 
 
 intervalSemitones : Interval → ℕ
@@ -101,64 +101,28 @@ intervalSemitones m6 = 8
 intervalSemitones M6 = 9
 intervalSemitones m7 = 10
 intervalSemitones M7 = 11
-intervalSemitones p8 = 12
 intervalSemitones (8va i) = 12 + intervalSemitones i
 
--- fromIntervalSemitones : Fin 13 → Interval
--- fromIntervalSemitones zero = p1
--- fromIntervalSemitones (suc zero) = m2
--- fromIntervalSemitones (suc (suc zero)) = M2
--- fromIntervalSemitones (suc (suc (suc zero))) = m3
--- fromIntervalSemitones (suc (suc (suc (suc zero)))) = M3
--- fromIntervalSemitones (suc (suc (suc (suc (suc zero))))) = p4
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc zero)))))) = tritone
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc zero))))))) = p5
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))) = m6
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))) = M6
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))) = m7
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))) = M7
--- fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero)))))))))))) = p8
+fromIntervalSemitones : ℕ → Interval
+fromIntervalSemitones 0 = p1
+fromIntervalSemitones 1 = m2
+fromIntervalSemitones 2 = M2
+fromIntervalSemitones 3 = m3
+fromIntervalSemitones 4 = M3
+fromIntervalSemitones 5 = p4
+fromIntervalSemitones 6 = tritone
+fromIntervalSemitones 7 = p5
+fromIntervalSemitones 8 = m6
+fromIntervalSemitones 9 = M6
+fromIntervalSemitones 10 = m7
+fromIntervalSemitones 11 = M7
+fromIntervalSemitones (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc x))))))))))))
+  = 8va (fromIntervalSemitones x)
 
--- fromIntervalSemitones≢p8 : ∀ {n} → fromIntervalSemitones (inject₁ n) ≢ p8
--- fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc zero))))))))))} ()
--- fromIntervalSemitones≢p8 {suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc (suc ())))))))))))} x
-
--- data ExtendedInterval : Set where
---   ↪    : (i : Interval) → i ≢ p8 → ExtendedInterval
---   8va+ : ExtendedInterval → ExtendedInterval
-
--- extendedIntervalSemitones : ExtendedInterval → ℕ
--- extendedIntervalSemitones (↪ x _)  = toℕ (intervalSemitones x)
--- extendedIntervalSemitones (8va+ x) = 12 + extendedIntervalSemitones x
-
--- unextendedInterval : ExtendedInterval → Interval
--- unextendedInterval (↪ i x) = i
--- unextendedInterval (8va+ (↪ p1 x)) = p8
--- unextendedInterval (8va+ (↪ i x))  = i
--- unextendedInterval (8va+ (8va+ x)) = unextendedInterval (8va+ x)
-
--- extendInterval : Interval → ExtendedInterval
--- extendInterval p1 = ↪ p1 λ ()
--- extendInterval m2 = ↪ m2 λ ()
--- extendInterval M2 = ↪ M2 λ ()
--- extendInterval m3 = ↪ m3 λ ()
--- extendInterval M3 = ↪ M3 λ ()
--- extendInterval p4 = ↪ p4 λ ()
--- extendInterval tritone = ↪ tritone λ ()
--- extendInterval p5 = ↪ p5 λ ()
--- extendInterval m6 = ↪ m6 λ ()
--- extendInterval M6 = ↪ M6 λ ()
--- extendInterval m7 = ↪ m7 λ ()
--- extendInterval M7 = ↪ M7 λ ()
--- extendInterval p8 = 8va+ (↪ p1 λ ())
-
--- 8vas+ : ℕ → Interval → ExtendedInterval
--- 8vas+ zero i = extendInterval i
--- 8vas+ (suc o) i = 8vas+ o i
-
--- toExtendedInterval : ℕ → ExtendedInterval
--- toExtendedInterval n with n divMod 12
--- ... | result octs remainder _ = 8vas+ octs (fromIntervalSemitones (inject₁ remainder))
+instance
+  ord-Interval : Ord Interval
+  Ord._≤_  ord-Interval x y = intervalSemitones x ≤ intervalSemitones y
+  Ord._≤?_ ord-Interval x y = intervalSemitones x ≤? intervalSemitones y
 
 data ConsonantInterval : Interval → Set where
   p1 : ConsonantInterval p1

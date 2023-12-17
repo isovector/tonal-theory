@@ -9,6 +9,7 @@ open import Data.Fin as Fin using (Fin; toℕ; remQuot; inject≤; zero; suc; fr
 open import Agda.Primitive
 open import Data.Product
 open import Interval
+open import Musikal.Classes
 
 data PitchClass : Set where
   A A♯ B C C♯ D D♯ E F F♯ G G♯ : PitchClass
@@ -120,6 +121,11 @@ semitones x ≤ᵖ semitones y = x ≤ y
 
 _≤ᵖ?_ : Decidable _≤ᵖ_
 semitones x ≤ᵖ? semitones y = x ≤? y
+
+instance
+  ord-Pitch : Ord Pitch
+  Ord._≤_  ord-Pitch = _≤ᵖ_
+  Ord._≤?_ ord-Pitch = _≤ᵖ?_
 
 -- record InDiatonicCollection (pc tonic : PitchClass) : Set where
 --   constructor ∈-diatonic
