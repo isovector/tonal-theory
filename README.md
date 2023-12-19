@@ -1,5 +1,12 @@
 # music-research
 
+## Open Questions
+
+- What are time signatures? Some sort of reinterpretation on the durations?
+-
+
+
+
 chords
 arpeggiations
 delay
