@@ -1,6 +1,6 @@
 module Musikal.Base where
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; module ≡-Reasoning; cong; refl)
 open import Duration public
 
 
@@ -23,10 +23,22 @@ infixr 6 _▹_
 
 
 private variable
-  d : 𝔻
+  d d₁ d₂ : 𝔻
   A B : Set
-  p : A
-  m n x y : Music A
+  p q : A
+  m n x y z : Music A
+
+
+infix 4 _↔_
+
+-- How do we make this come out of the definition? What's happening here?
+data _↔_ {A : Set} : Music A → Music A → Set where
+  refl : m ↔ m
+  sym : m ↔ n → n ↔ m
+  trans : x ↔ y → y ↔ z → x ↔ z
+  rearticulate : 𝅘𝅥 p (d₁ + d₂) ↔ 𝅘𝅥 p d₁ ▹ 𝅘𝅥 p d₂
+  arpeggiate : 𝅘𝅥 p (d₁ + d₂) ∣ 𝅘𝅥 q (d₁ + d₂) ↔ 𝅘𝅥 p d₁ ▹ 𝅘𝅥 q d₂
+
 
 
 -- There is a trivial piece of music, namely, a zero amount of silence.
